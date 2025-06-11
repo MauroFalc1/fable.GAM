@@ -6,7 +6,7 @@
 \alias{fable.GAM-package}
 \title{fable.GAM: Generalized Additive Model (GAM) wrapper for fable}
 \description{
-Use GAMs within the fable/fabletools workframe.
+Use GAM's within the fable/fabletools workframe.
 }
 \seealso{
 Useful links:

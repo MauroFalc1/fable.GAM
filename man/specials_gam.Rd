@@ -15,7 +15,7 @@ within the model formulae interface.
 
 
 \subsection{trend}{
-The `trend` special includes common linear trend regressors in the model.
+The `trend` special includes common linear and smoothened trend regressors in the model.
 It also supports piecewise linear trend via the `knots` argument.
 \preformatted{
 trend(knots = NULL, origin = NULL, linear=FALSE, ...)
@@ -25,7 +25,7 @@ trend(knots = NULL, origin = NULL, linear=FALSE, ...)
   `knots`    \tab A vector of times (same class as the data's time index)
   identifying the position of knots for a piecewise linear trend.\cr
   `origin`   \tab An optional starting time value for the trend. \cr
-  `linear` \tab logical indicating whether using linear or smoothed trend.\cr
+  `linear` \tab logical indicating whether using linear or smoothened trend.\cr
   `...` \tab other variables to be passed to `gam::s()`
 }
 }
