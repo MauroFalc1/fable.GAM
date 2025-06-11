@@ -9,7 +9,7 @@ Authors@R: c(
       role = c("aut", "cre")
     )
   )
-Description: Use GAMs within the fable/fabletools workframe.
+Description: Use GAM's within the fable/fabletools workframe.
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
