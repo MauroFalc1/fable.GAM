@@ -4,9 +4,9 @@
 \name{fable.GAM-package}
 \alias{fable.GAM}
 \alias{fable.GAM-package}
-\title{fable.GAM: What the Package Does (Title Case)}
+\title{fable.GAM: Generalized Additive Model (GAM) wrapper for fable}
 \description{
-More about what it does (maybe more than one line). Continuation lines should be indented.
+Use GAMs within the fable/fabletools workframe.
 }
 \seealso{
 Useful links:
@@ -17,7 +17,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Jane Doe \email{jane@example.com}
+\strong{Maintainer}: Mauro Falcone \email{mauro.falcone@live.it}
 
 }
 \keyword{package}

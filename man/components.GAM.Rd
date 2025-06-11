@@ -4,7 +4,7 @@
 \alias{components.GAM}
 \title{Extract components from a <GAM> model (Hastie & Tibshirani **gam** package)}
 \usage{
-components.GAM(object, ...)
+\method{components}{GAM}(object, ...)
 }
 \arguments{
 \item{object}{A fitted model of class <GAM> (produced by `train_gam()`).}

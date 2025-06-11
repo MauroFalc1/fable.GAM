@@ -91,37 +91,6 @@ fourierify <- function(.dat,expr=FALSE,keep_all=TRUE,period, K, origin = NULL){
 }
 
 
-# # parse_special_terms.R
-# # Minimal helper: apply `handler` to each call named `name` on the RHS of a formula.
-# on_calls <- function(formula, name, handler) {
-#   out <- list()
-#   # Use iterative approach with a stack instead of recursion
-#   stack <- list(formula[[3]])
-#
-#   while (length(stack) > 0) {
-#     expr <- stack[[length(stack)]]
-#     stack <- stack[-length(stack)]
-#
-#     if (is.call(expr)) {
-#       if (identical(as.character(expr[[1]]), name)) {
-#         out[[length(out) + 1]] <- handler(as.list(expr)[-1])
-#       }
-#       # Add child expressions to stack
-#       stack <- c(stack, as.list(expr)[-1])
-#     }
-#   }
-#   out
-# }
-#
-# sum_calls <- function(...) {
-#   exprs <- Filter(function(e) !is.null(e) && length(e) > 0, list(...))
-#   if (length(exprs) == 0L) return(quote(0))
-#   if (length(exprs) == 1L) return(exprs[[1]])
-#
-#   # Create a flat addition call instead of nested calls
-#   do.call(call, c("+", exprs))
-# }
-
 add_specials <- function(formula, data, left=TRUE) {
   # Pick the best available set of names
   vars <- names(data) %||% colnames(data) %||% as.character(data)

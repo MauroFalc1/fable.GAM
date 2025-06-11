@@ -4,7 +4,7 @@
 \alias{forecast.GAM}
 \title{Produce forecasts from a GAM model}
 \usage{
-forecast.GAM(
+\method{forecast}{GAM}(
   object,
   new_data,
   specials = NULL,

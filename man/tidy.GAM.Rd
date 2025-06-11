@@ -4,7 +4,7 @@
 \alias{tidy.GAM}
 \title{Tidy the coefficients (and smooth term tests) from a GAM model}
 \usage{
-tidy.GAM(x, include_smooth = TRUE, ...)
+\method{tidy}{GAM}(x, include_smooth = TRUE, ...)
 }
 \arguments{
 \item{x}{A fitted `GAM` object.}

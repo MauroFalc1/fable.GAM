@@ -4,7 +4,7 @@
 \alias{glance.GAM}
 \title{Glance at a GAM model}
 \usage{
-glance.GAM(x, ...)
+\method{glance}{GAM}(x, ...)
 }
 \arguments{
 \item{x}{A `GAM` model object.}

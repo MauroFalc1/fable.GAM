@@ -4,7 +4,7 @@
 \alias{generate.GAM}
 \title{Generate future sample paths from a <GAM> model}
 \usage{
-generate.GAM(x, new_data, specials = NULL, bootstrap = FALSE, times = 1, ...)
+\method{generate}{GAM}(x, new_data, specials = NULL, bootstrap = FALSE, times = 1, ...)
 }
 \arguments{
 \item{x}{A fitted model.}

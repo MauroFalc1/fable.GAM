@@ -4,7 +4,7 @@
 \alias{report.GAM}
 \title{Summarise a GAM model fit (Hastie & Tibshirani `gam` package)}
 \usage{
-report.GAM(object, digits = max(3L, getOption("digits") - 3L), ...)
+\method{report}{GAM}(object, digits = max(3L, getOption("digits") - 3L), ...)
 }
 \arguments{
 \item{object}{A fitted GAM object (class `GAM` created by `train_gam()` or

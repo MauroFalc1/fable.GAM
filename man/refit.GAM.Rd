@@ -4,7 +4,7 @@
 \alias{refit.GAM}
 \title{Objects exported from other packages}
 \usage{
-refit.GAM(object, new_data, specials = NULL, ...)
+\method{refit}{GAM}(object, new_data, specials = NULL, ...)
 }
 \value{
 A newly fitted object of class <GAM> ready to slot back into a mable.
