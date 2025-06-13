@@ -2,26 +2,32 @@
 % Please edit documentation in R/model.R
 \name{refit.GAM}
 \alias{refit.GAM}
-\title{Objects exported from other packages}
+\title{Refit a `GAM`}
 \usage{
 \method{refit}{GAM}(object, new_data, specials = NULL, ...)
 }
-\value{
-A newly fitted object of class <GAM> ready to slot back into a mable.
+\arguments{
+\item{object}{A model for which forecasts are required.}
+
+\item{new_data}{A tsibble containing the time points and exogenous regressors to produce forecasts for.}
+
+\item{specials}{(passed by \code{\link[fabletools:forecast]{fabletools::forecast.mdl_df()}}).}
+
+\item{...}{Other arguments passed to methods}
 }
 \description{
-These objects are imported from other packages. Follow the links
-below to see their documentation.
-
-\describe{
-  \item{distributional}{\code{\link[distributional]{hilo}}}
-
-  \item{dplyr}{\code{\link[dplyr:reexports]{\%>\%}}, \code{\link[dplyr]{vars}}}
-
-  \item{generics}{\code{\link[generics]{accuracy}}, \code{\link[generics]{augment}}, \code{\link[generics]{components}}, \code{\link[generics]{equation}}, \code{\link[generics]{forecast}}, \code{\link[generics]{generate}}, \code{\link[generics]{glance}}, \code{\link[generics]{hypothesize}}, \code{\link[generics]{interpolate}}, \code{\link[generics]{refit}}, \code{\link[generics]{tidy}}}
-
-  \item{ggplot2}{\code{\link[ggplot2]{autolayer}}, \code{\link[ggplot2]{autoplot}}}
-
-  \item{tsibble}{\code{\link[tsibble:as-tsibble]{as_tsibble}}}
+Applies a fitted `GAM` to a new dataset.
 }
+\examples{
+lung_deaths_male <- as_tsibble(mdeaths)
+lung_deaths_female <- as_tsibble(fdeaths)
+
+fit <- lung_deaths_male \%>\%
+  model(GAM(value ~ trend() + season()))
+
+report(fit)
+
+fit \%>\%
+  refit(lung_deaths_female) \%>\%
+  report()
 }

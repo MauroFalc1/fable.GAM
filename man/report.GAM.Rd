@@ -24,3 +24,8 @@ Provides a console report formatted similarly to other `fable` model
 In particular it makes use of the `anova` and `parametric.anova` tables
 returned by `summary.gam()`.
 }
+\examples{
+as_tsibble(USAccDeaths) \%>\%
+  model(gam = GAM(log(value) ~ trend() + season())) \%>\%
+  report()
+}

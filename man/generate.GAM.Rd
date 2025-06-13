@@ -22,3 +22,9 @@
 \description{
 Generate future sample paths from a <GAM> model
 }
+\examples{
+as_tsibble(USAccDeaths) \%>\%
+  model(gam = GAM(log(value) ~ trend() + season())) \%>\%
+  generate()
+
+}

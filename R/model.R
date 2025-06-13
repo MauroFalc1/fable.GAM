@@ -324,6 +324,12 @@ forecast.GAM <- function(object,
 ## -------------------------------------------------------------------------
 ## fitted() -----------------------------------------------------------------
 
+#' @inherit fable::fitted.ARIMA
+#'
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   fitted()
 #' @export
 fitted.GAM <- function(object, ...) {
   object$fitted.values
@@ -332,6 +338,12 @@ fitted.GAM <- function(object, ...) {
 ## -------------------------------------------------------------------------
 ## residuals() --------------------------------------------------------------
 
+#' @inherit fable::residuals.ARIMA
+#'
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   residuals()
 #' @export
 residuals.GAM <- function(object,
                           type = c("innovation","response","deviance",
@@ -345,10 +357,6 @@ residuals.GAM <- function(object,
 residuals.Gam <- residuals.GAM
 
 
-# #' @importFrom tibble tibble
-# #' @importFrom stats formula AIC BIC logLik deviance df.residual nobs
-# NULL
-#'
 #' Glance at a GAM model
 #'
 #' Returns a one-row tibble summarizing the model's fit.
@@ -359,6 +367,10 @@ residuals.Gam <- residuals.GAM
 #' @return A one-row `tibble` with columns such as `r.squared`, `adj.r.squared`,
 #'   `deviance`, `df.residual`, `log_lik`, `AIC`, `BIC`, `dispersion`, and `nobs`.
 #'
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   glance()
 #' @export
 glance.GAM <- function(x, ...) {
   sumgam <- summary(x)
@@ -400,6 +412,10 @@ glance.GAM <- function(x, ...) {
 #'   ignored).
 #'
 #' @return (Invisibly) returns `object` so the call can be piped/assigned.
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   report()
 #' @export
 report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) {
   # Protect against the wrong class -------------------------------------------------
@@ -498,6 +514,11 @@ format.GAM <- function(x, ...){
 #' @param ... Further arguments for S3 completeness (ignored).
 #'
 #' @return A `tibble` with one row per term.
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   tidy()
+#'
 #' @export
 #' @importFrom tibble tibble
 #' @importFrom dplyr bind_rows
@@ -550,6 +571,12 @@ tidy.GAM <- function(x, include_smooth = TRUE, ...) {
 #'
 #' @inheritParams fable::generate.ETS
 #' @param times Integer. Number of simulated paths to produce. Default 1.
+#'
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   generate()
+#'
 #' @export
 generate.GAM <- function(x,
                          new_data,
@@ -570,13 +597,24 @@ generate.GAM <- function(x,
 }
 
 
-# ──────────────────────────────────────────────────────────────────────────────
-# refit.GAM
-# Re-estimate a previously fitted GAM on a new (usually extended) tsibble.
-# -----------------------------------------------------------------------------
-#' @inherit fabletools::refit
-#' @inheritParams fabletools::forecast
-#' @return A newly fitted object of class <GAM> ready to slot back into a mable.
+#' Refit a `GAM`
+#'
+#' Applies a fitted `GAM` to a new dataset.
+#'
+#' @inheritParams fable::refit.ARIMA
+#'
+#' @examples
+#' lung_deaths_male <- as_tsibble(mdeaths)
+#' lung_deaths_female <- as_tsibble(fdeaths)
+#'
+#' fit <- lung_deaths_male %>%
+#'   model(GAM(value ~ trend() + season()))
+#'
+#' report(fit)
+#'
+#' fit %>%
+#'   refit(lung_deaths_female) %>%
+#'   report()
 #' @export
 refit.GAM <- function(object,
                       new_data,
@@ -615,7 +653,14 @@ refit.GAM <- function(object,
   structure(refit_obj,class = c("GAM", class(refit_obj)))
 }
 
-
+#' @inherit fable::interpolate.ARIMA
+#'
+#' @examples
+#' library(tsibbledata)
+#'
+#' olympic_running %>%
+#'   model(gam = GAM(Time ~ trend())) %>%
+#'   interpolate(olympic_running)
 #' @export
 interpolate.GAM <- function(object, new_data, specials) {
   # Get missing values
@@ -655,6 +700,10 @@ interpolate.GAM <- function(object, new_data, specials) {
 #' @return A [`fabletools::dable`] whose columns sum to `.response` *exactly*;
 #'   column names are syntactically valid, so downstream verbs (e.g.
 #'   `autoplot()`) resolve them without pattern‑matching surprises.
+#' @examples
+#' as_tsibble(USAccDeaths) %>%
+#'   model(gam = GAM(log(value) ~ trend() + season())) %>%
+#'   components()
 #' @export
 components.GAM <- function(object, ...) {
   # ── Guards ---------------------------------------------------------------

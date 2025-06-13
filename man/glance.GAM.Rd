@@ -18,3 +18,8 @@ A one-row `tibble` with columns such as `r.squared`, `adj.r.squared`,
 \description{
 Returns a one-row tibble summarizing the model's fit.
 }
+\examples{
+as_tsibble(USAccDeaths) \%>\%
+  model(gam = GAM(log(value) ~ trend() + season())) \%>\%
+  glance()
+}

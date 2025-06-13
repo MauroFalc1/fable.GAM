@@ -21,3 +21,8 @@ This method integrates a GAM (fitted with `n4::GAM()`) into the tidyverts
 decomposition grammar. It returns a `dable`, which then works seamlessly
 with `autoplot()`/`ggplot2` and other **fabletools** helpers.
 }
+\examples{
+as_tsibble(USAccDeaths) \%>\%
+  model(gam = GAM(log(value) ~ trend() + season())) \%>\%
+  components()
+}
