@@ -2,7 +2,7 @@
 #' @keywords package
 "_PACKAGE"
 
-globalVariables(c("self","origin"))
+globalVariables(c("self", "origin"))
 
 #' Training function of GAM model
 #'
@@ -99,19 +99,18 @@ train_gam <- function(.data, specials, ...) {
 #' * [fabletools::new_specials()],
 #' * <https://fabletools.tidyverts.org/articles/extension_models.html>
 specials_gam <- fabletools::new_specials(
-  trend = function (knots = NULL, origin = NULL,linear=FALSE,...)
-  {
+  trend = function(knots = NULL, origin = NULL, linear = FALSE, ...) {
     if (is.null(origin)) {
       if (is.null(self$origin)) {
         self$origin <- self$data[[index_var(self$data)]][[1]]
       }
       origin <- self$origin
     }
-    out.dat<-fabletools:::fbl_trend(self$data, knots, origin)
+    out.dat <- fabletools:::fbl_trend(self$data, knots, origin)
     if (linear) {
-      out.str <- paste0(names(out.dat),collapse = " + ")
-      out.expr <- rlang::expr(!!paste0(names(out.dat),collapse = " + " ))
-    }else{
+      out.str <- paste0(names(out.dat), collapse = " + ")
+      out.expr <- rlang::expr(!!paste0(names(out.dat), collapse = " + "))
+    } else {
       vars <- names(out.dat)
       calls <- lapply(vars, function(v) rlang::expr(s(!!rlang::sym(v), !!!list(...))))
       # Build a flat addition expression instead of nested reduction
@@ -122,30 +121,29 @@ specials_gam <- fabletools::new_specials(
       }
       out.str <- deparse(out.expr)
     }
-    return(list(data=out.dat,expr=out.expr,str=out.str))
-  }
-  ,
-  season = function (period = NULL)
-  {
-    out <- as_model_matrix(fabletools:::fbl_season(self$data,
-                                                   period))
+    return(list(data = out.dat, expr = out.expr, str = out.str))
+  },
+  season = function(period = NULL) {
+    out <- as_model_matrix(fabletools:::fbl_season(
+      self$data,
+      period
+    ))
     stats::model.matrix(~., data = as.data.frame(out))[, -1, drop = FALSE]
-  }
-  ,
-  fourier = function (period = NULL, K, origin = NULL)
-  {
+  },
+  fourier = function(period = NULL, K, origin = NULL) {
     if (is.null(origin)) {
       if (is.null(self$origin)) {
         self$origin <- self$data[[index_var(self$data)]][[1]]
       }
       origin <- self$origin
     }
-    as.matrix(fabletools:::fbl_fourier(self$data, period, K,
-                                       origin))
-  }
-  ,
+    as.matrix(fabletools:::fbl_fourier(
+      self$data, period, K,
+      origin
+    ))
+  },
   xreg = fabletools::special_xreg(default_intercept = FALSE),
-  .required_specials = NULL#,
+  .required_specials = NULL # ,
   # .xreg_specials = names(fabletools::common_xregs)
 )
 
@@ -161,9 +159,48 @@ specials_gam <- fabletools::new_specials(
 #'
 #' @section Specials:
 #'
+#' \subsection{trend}{
+#' The `trend` special includes common linear and smoothened trend regressors in the model.
+#' It also supports piecewise linear trend via the `knots` argument.
+#' \preformatted{
+#' trend(knots = NULL, origin = NULL, linear=FALSE, ...)
+#' }
+#'
+#' \tabular{ll}{
+#'   `knots`    \tab A vector of times (same class as the data's time index)
+#'   identifying the position of knots for a piecewise linear trend.\cr
+#'   `origin`   \tab An optional starting time value for the trend. \cr
+#'   `linear` \tab logical indicating whether using linear or smoothened trend.\cr
+#'   `...` \tab other variables to be passed to `gam::s()`
+#' }
+#' }
+#'
+#' \subsection{season}{
+#' The `season` special includes seasonal dummy variables in the model.
+#' \preformatted{
+#' season(period = NULL)
+#' }
+#'
+#' \tabular{ll}{
+#'   `period`   \tab The periodic nature of the seasonality. This can be either a number indicating the number of observations in each seasonal period, or text to indicate the duration of the seasonal window (for example, annual seasonality would be "1 year").
+#' }
+#' }
+#'
+#' \subsection{fourier}{
+#' The `fourier` special includes seasonal fourier terms in the model. The maximum order of the fourier terms must be specified using `K`.
+#' \preformatted{
+#' fourier(period = NULL, K, origin = NULL)
+#' }
+#'
+#' \tabular{ll}{
+#'   `period`   \tab The periodic nature of the seasonality. This can be either a number indicating the number of observations in each seasonal period, or text to indicate the duration of the seasonal window (for example, annual seasonality would be "1 year"). \cr
+#'   `K`        \tab The maximum order of the fourier terms.\cr
+#'   `origin`   \tab An optional time value to act as the starting time for the fourier series.
+#' }
+#' }
+#'
 #' \subsection{xreg}{
 #' Exogenous regressors can be included in a GAM model without explicitly using the `xreg()` special.
-#' Specials as specified in [`specials_gam`] can also be used.
 #' \preformatted{
 #' xreg(...)
 #' }
@@ -190,9 +227,9 @@ specials_gam <- fabletools::new_specials(
 #' @export
 GAM <- function(formula, ...) {
   gam_model <- fabletools::new_model_class("GAM",
-                               train = train_gam,
-                               specials = specials_gam,
-                               origin = NULL
+    train = train_gam,
+    specials = specials_gam,
+    origin = NULL
   )
   fabletools::new_model_definition(gam_model, !!enquo(formula), ...)
 }
@@ -219,7 +256,6 @@ forecast.GAM <- function(object,
                          approx_normal = TRUE,
                          times = 5e3,
                          ...) {
-
   # 1 ────────────────────────────────────────────────────────────────
   # Re‑create the design matrix for the *new* data
   # ──────────────────────────────────────────────────────────────────
@@ -236,7 +272,7 @@ forecast.GAM <- function(object,
   )
 
   fc_mean <- pr
-  se_fit  <- gam_se(object, gam_data)
+  se_fit <- gam_se(object, gam_data)
 
   # Residual variance (for Gaussian‑type models)
   resvar <- mean(object$residuals^2, na.rm = TRUE)
@@ -260,63 +296,63 @@ forecast.GAM <- function(object,
   fam <- object$family$family
 
   switch(fam,
-         # ──────────────────── Gaussian & quasi families ──────────────────
-         "gaussian" = {
-           sd_tot <- sqrt(se_fit^2 + resvar)
-           if (approx_normal) {
-             distributional::dist_normal(fc_mean, sd_tot)
-           } else {
-             df <- if (!is.null(object$df.residual)) {
-               object$df.residual
-             } else {
-               length(object$residuals) - length(object$coefficients)
-             }
-             distributional::dist_student_t(df, fc_mean, sd_tot)
-           }
-         },
-         "quasi" = {
-           sd_tot <- sqrt(se_fit^2 + resvar)
-           distributional::dist_normal(fc_mean, sd_tot)
-         },
+    # ──────────────────── Gaussian & quasi families ──────────────────
+    "gaussian" = {
+      sd_tot <- sqrt(se_fit^2 + resvar)
+      if (approx_normal) {
+        distributional::dist_normal(fc_mean, sd_tot)
+      } else {
+        df <- if (!is.null(object$df.residual)) {
+          object$df.residual
+        } else {
+          length(object$residuals) - length(object$coefficients)
+        }
+        distributional::dist_student_t(df, fc_mean, sd_tot)
+      }
+    },
+    "quasi" = {
+      sd_tot <- sqrt(se_fit^2 + resvar)
+      distributional::dist_normal(fc_mean, sd_tot)
+    },
 
-         # ─────────────────────────── Poisson ─────────────────────────────
-         "poisson" = {
-           distributional::dist_poisson(fc_mean)
-         },
+    # ─────────────────────────── Poisson ─────────────────────────────
+    "poisson" = {
+      distributional::dist_poisson(fc_mean)
+    },
 
-         # ────────────────────────── Binomial ─────────────────────────────
-         "binomial" = {
-           size <- if (!is.null(object$prior.weights)) object$prior.weights else 1
-           prob <- pmin(pmax(fc_mean / size, 0), 1)
-           distributional::dist_binomial(size, prob)
-         },
+    # ────────────────────────── Binomial ─────────────────────────────
+    "binomial" = {
+      size <- if (!is.null(object$prior.weights)) object$prior.weights else 1
+      prob <- pmin(pmax(fc_mean / size, 0), 1)
+      distributional::dist_binomial(size, prob)
+    },
 
-         # ─────────────────────────── Gamma ───────────────────────────────
-         "Gamma" = {
-           phi   <- tryCatch(summary(object)$dispersion, error = function(e) 1)
-           shape <- 1 / phi
-           scale <- fc_mean / shape
-           distributional::dist_gamma(shape, scale)
-         },
+    # ─────────────────────────── Gamma ───────────────────────────────
+    "Gamma" = {
+      phi <- tryCatch(summary(object)$dispersion, error = function(e) 1)
+      shape <- 1 / phi
+      scale <- fc_mean / shape
+      distributional::dist_gamma(shape, scale)
+    },
 
-         # ─────────────────────── Inverse‑Gaussian ────────────────────────
-         "inverse.gaussian" = {
-           phi    <- tryCatch(summary(object)$dispersion, error = function(e) 1)
-           lambda <- 1 / phi
-           distributional::dist_inverse_gaussian(fc_mean, lambda)
-         },
+    # ─────────────────────── Inverse‑Gaussian ────────────────────────
+    "inverse.gaussian" = {
+      phi <- tryCatch(summary(object)$dispersion, error = function(e) 1)
+      lambda <- 1 / phi
+      distributional::dist_inverse_gaussian(fc_mean, lambda)
+    },
 
-         # ───────────────────── Negative Binomial ─────────────────────────
-         "Negative Binomial" = {
-           theta <- tryCatch(object$family$theta, error = function(e) 1)
-           distributional::dist_negative_binomial(mu = fc_mean, size = theta)
-         },
+    # ───────────────────── Negative Binomial ─────────────────────────
+    "Negative Binomial" = {
+      theta <- tryCatch(object$family$theta, error = function(e) 1)
+      distributional::dist_negative_binomial(mu = fc_mean, size = theta)
+    },
 
-         # ─────────────────────── Default fallback ───────────────────────
-         {
-           sd_tot <- sqrt(se_fit^2 + resvar)
-           distributional::dist_normal(fc_mean, sd_tot)
-         }
+    # ─────────────────────── Default fallback ───────────────────────
+    {
+      sd_tot <- sqrt(se_fit^2 + resvar)
+      distributional::dist_normal(fc_mean, sd_tot)
+    }
   )
 }
 
@@ -346,11 +382,13 @@ fitted.GAM <- function(object, ...) {
 #'   residuals()
 #' @export
 residuals.GAM <- function(object,
-                          type = c("innovation","response","deviance",
-                                   "pearson","working","partial"),
+                          type = c(
+                            "innovation", "response", "deviance",
+                            "pearson", "working", "partial"
+                          ),
                           ...) {
   type <- match.arg(type)
-  object$residuals                # all flavours are identical for a GAM
+  object$residuals # all flavours are identical for a GAM
 }
 # register an alias for the underlying "Gam" class too
 #' @export
@@ -445,16 +483,20 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   if (!is.null(sm$parametric.anova)) {
     cat("\nParametric terms (Wald tests)\n")
     cli_line()
-    printCoefmat(sm$parametric.anova, digits = digits, signif.stars = TRUE,
-                 P.values = TRUE, na.print = "NA")
+    printCoefmat(sm$parametric.anova,
+      digits = digits, signif.stars = TRUE,
+      P.values = TRUE, na.print = "NA"
+    )
   }
 
   # Smooth component ----------------------------------------------------------------
   if (!is.null(sm$anova)) {
     cat("\nSmooth terms (Approx. chi-square tests)\n")
     cli_line()
-    printCoefmat(sm$anova, digits = digits, signif.stars = TRUE,
-                 P.values = TRUE,has.Pvalue = TRUE,na.print = "NA")
+    printCoefmat(sm$anova,
+      digits = digits, signif.stars = TRUE,
+      P.values = TRUE, has.Pvalue = TRUE, na.print = "NA"
+    )
   }
 
   # Goodness of fit ------------------------------------------------------------------
@@ -493,7 +535,7 @@ model_sum.GAM <- function(x, ...) {
 }
 
 #' @export
-format.GAM <- function(x, ...){
+format.GAM <- function(x, ...) {
   "Generalized Additive Model (GAM)"
 }
 
@@ -528,7 +570,7 @@ tidy.GAM <- function(x, include_smooth = TRUE, ...) {
 
   # ── Parametric coefficients ----------------------------------------------
   beta <- stats::coef(x)
-  se   <- sqrt(diag(stats::vcov(x)))
+  se <- sqrt(diag(stats::vcov(x)))
   stat <- beta / se
   pval <- 2 * stats::pnorm(abs(stat), lower.tail = FALSE)
 
@@ -546,20 +588,20 @@ tidy.GAM <- function(x, include_smooth = TRUE, ...) {
   }
 
   # ── Smooth‑term chi‑square / F tests -------------------------------------
-  sm  <- summary(x)
+  sm <- summary(x)
   tbl_smooth <- NULL
   if (!is.null(sm$anova)) {
     an <- as.data.frame(sm$anova)
     an$term <- rownames(an)
 
     stat_col <- if ("Chi.sq" %in% names(an)) "Chi.sq" else if ("F" %in% names(an)) "F" else NULL
-    p_col    <- if ("Pr(>Chi)" %in% names(an)) "Pr(>Chi)" else if ("Pr(F)" %in% names(an)) "Pr(F)" else NULL
+    p_col <- if ("Pr(>Chi)" %in% names(an)) "Pr(>Chi)" else if ("Pr(F)" %in% names(an)) "Pr(F)" else NULL
 
     tbl_smooth <- tibble::tibble(
       term      = an$term,
       df        = an$Df,
       statistic = if (!is.null(stat_col)) an[[stat_col]] else NA_real_,
-      p.value   = if (!is.null(p_col))  an[[p_col]]   else NA_real_,
+      p.value   = if (!is.null(p_col)) an[[p_col]] else NA_real_,
       component = "smooth"
     )
   }
@@ -580,11 +622,10 @@ tidy.GAM <- function(x, include_smooth = TRUE, ...) {
 #' @export
 generate.GAM <- function(x,
                          new_data,
-                         specials  = NULL,
+                         specials = NULL,
                          bootstrap = FALSE,
-                         times     = 1,
+                         times = 1,
                          ...) {
-
   # ── 1. Rebuild the design matrix for the future horizon ────────────────
   gam_data <- build_gam_data(new_data, specials)
 
@@ -592,7 +633,7 @@ generate.GAM <- function(x,
   mu <- stats::predict(x, newdata = gam_data, type = "response")
 
   # ── 3. Generate a random future paths and bind them together ───────────-
-  .innov <- gam_draw_innov(x,gam_data,mu,bootstrap)
+  .innov <- gam_draw_innov(x, gam_data, mu, bootstrap)
   dplyr::transmute(new_data, .sim = as.numeric(mu + .innov))
 }
 
@@ -620,7 +661,6 @@ refit.GAM <- function(object,
                       new_data,
                       specials = NULL,
                       ...) {
-
   # 0 ── Early exit ───────────────────────────────────────────────────────────
   if (is.null(new_data) || nrow(new_data) == 0) {
     warning("`new_data` is empty; returning original `object` unchanged.")
@@ -628,14 +668,16 @@ refit.GAM <- function(object,
   }
 
   # 1 ── Extract original specification ───────────────────────────────────────
-  gam_formula <- stats::formula(object)     # stored by gam::gam
+  gam_formula <- stats::formula(object) # stored by gam::gam
   # av <- all.vars(terms.formula(gam_formula))
   mv <- tsibble::measured_vars(new_data)
-  if(length(mv) > 1) stop("GAM() is a univariate model.")
+  if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- new_data[[mv]]
-  gam_data <- build_gam_data(dplyr::bind_cols(tibble("t_response"=y),
-                                              dplyr::as_tibble(new_data)), specials)
-  gam_family  <- object$family              # also stored by gam::gam
+  gam_data <- build_gam_data(dplyr::bind_cols(
+    tibble("t_response" = y),
+    dplyr::as_tibble(new_data)
+  ), specials)
+  gam_family <- object$family # also stored by gam::gam
 
   # 3 ── Build model frame for the new data ───────────────────────────────────
 
@@ -650,7 +692,7 @@ refit.GAM <- function(object,
   # 5 ── Preserve the custom GAM class and any needed attributes ──────────────
   #      (add back 'specials' so generate()/forecast()/interpolate() keep working)
   refit_obj$index <- new_data %>% dplyr::pull(tsibble::index(new_data))
-  structure(refit_obj,class = c("GAM", class(refit_obj)))
+  structure(refit_obj, class = c("GAM", class(refit_obj)))
 }
 
 #' @inherit fable::interpolate.ARIMA
@@ -678,7 +720,7 @@ interpolate.GAM <- function(object, new_data, specials) {
     type    = "response"
   )
   fits <- pr
-  if(length(y) != length(fits)) {
+  if (length(y) != length(fits)) {
     abort("Interpolation for GAM models is only supported for data used to estimate the model.")
   }
 
@@ -688,19 +730,14 @@ interpolate.GAM <- function(object, new_data, specials) {
   new_data
 }
 
-#' Extract components from a <GAM> model (Hastie & Tibshirani **gam** package)
+#' Extract components from a GAM model
 #'
-#' This method integrates a GAM (fitted with `n4::GAM()`) into the tidyverts
-#' decomposition grammar. It returns a `dable`, which then works seamlessly
-#' with `autoplot()`/`ggplot2` and other **fabletools** helpers.
+#' @param object A fitted model of class GAM.
+#' @param ... Currently ignored.
 #'
-#' @param object A fitted model of class <GAM> (produced by `train_gam()`).
-#' @param ...    Future‑proof, currently ignored.
-#'
-#' @return A [`fabletools::dable`] whose columns sum to `.response` *exactly*;
-#'   column names are syntactically valid, so downstream verbs (e.g.
-#'   `autoplot()`) resolve them without pattern‑matching surprises.
+#' @return A [`fabletools::dable`] whose columns sum to `.response` *exactly*.
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   components()
@@ -712,8 +749,8 @@ components.GAM <- function(object, ...) {
   }
 
   # ── 1. Core pieces ------------------------------------------------------
-  resp <- stats::fitted(object)        # response‑scale fitted values
-  n    <- length(resp)
+  resp <- stats::fitted(object) # response‑scale fitted values
+  n <- length(resp)
 
   # Per‑term contributions (link scale) —— returned matrix has attr "constant"
   term_mat <- stats::predict(object, type = "terms", se.fit = FALSE)
@@ -722,7 +759,7 @@ components.GAM <- function(object, ...) {
   # Make every column name syntactically valid **and** match what `all.vars()`
   # will pull out of the alias expression (→ important for `autoplot()`)
   original <- names(term_tbl)
-  cleaned  <- vapply(original, make.names, FUN.VALUE = character(1), unique = TRUE)
+  cleaned <- vapply(original, make.names, FUN.VALUE = character(1), unique = TRUE)
   names(term_tbl) <- cleaned
 
   # Intercept (scalar) recycled to n rows
@@ -739,13 +776,13 @@ components.GAM <- function(object, ...) {
     tsibble::as_tsibble(index = .idx)
 
   # ── 3. Wrap as dable -----------------------------------------------------
-  alias_expr <- rlang::parse_expr(           # .response ≡ sum(components)
+  alias_expr <- rlang::parse_expr( # .response ≡ sum(components)
     paste(c("intercept", cleaned), collapse = " + ")
   )
 
   fabletools::as_dable(
     cmp,
-    resp   = !!rlang::sym(".response"),
+    resp = !!rlang::sym(".response"),
     method = "GAM",
     aliases = rlang::set_names(list(alias_expr), ".response")
   )

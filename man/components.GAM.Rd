@@ -2,26 +2,23 @@
 % Please edit documentation in R/model.R
 \name{components.GAM}
 \alias{components.GAM}
-\title{Extract components from a <GAM> model (Hastie & Tibshirani **gam** package)}
+\title{Extract components from a GAM model}
 \usage{
 \method{components}{GAM}(object, ...)
 }
 \arguments{
-\item{object}{A fitted model of class <GAM> (produced by `train_gam()`).}
+\item{object}{A fitted model of class GAM.}
 
-\item{...}{Future‑proof, currently ignored.}
+\item{...}{Currently ignored.}
 }
 \value{
-A [`fabletools::dable`] whose columns sum to `.response` *exactly*;
-  column names are syntactically valid, so downstream verbs (e.g.
-  `autoplot()`) resolve them without pattern‑matching surprises.
+A [`fabletools::dable`] whose columns sum to `.response` *exactly*.
 }
 \description{
-This method integrates a GAM (fitted with `n4::GAM()`) into the tidyverts
-decomposition grammar. It returns a `dable`, which then works seamlessly
-with `autoplot()`/`ggplot2` and other **fabletools** helpers.
+Extract components from a GAM model
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   components()

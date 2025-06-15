@@ -22,9 +22,48 @@ and `fourier()`.
 \section{Specials}{
 
 
+\subsection{trend}{
+The `trend` special includes common linear and smoothened trend regressors in the model.
+It also supports piecewise linear trend via the `knots` argument.
+\preformatted{
+trend(knots = NULL, origin = NULL, linear=FALSE, ...)
+}
+
+\tabular{ll}{
+  `knots`    \tab A vector of times (same class as the data's time index)
+  identifying the position of knots for a piecewise linear trend.\cr
+  `origin`   \tab An optional starting time value for the trend. \cr
+  `linear` \tab logical indicating whether using linear or smoothened trend.\cr
+  `...` \tab other variables to be passed to `gam::s()`
+}
+}
+
+\subsection{season}{
+The `season` special includes seasonal dummy variables in the model.
+\preformatted{
+season(period = NULL)
+}
+
+\tabular{ll}{
+  `period`   \tab The periodic nature of the seasonality. This can be either a number indicating the number of observations in each seasonal period, or text to indicate the duration of the seasonal window (for example, annual seasonality would be "1 year").
+}
+}
+
+\subsection{fourier}{
+The `fourier` special includes seasonal fourier terms in the model. The maximum order of the fourier terms must be specified using `K`.
+\preformatted{
+fourier(period = NULL, K, origin = NULL)
+}
+
+\tabular{ll}{
+  `period`   \tab The periodic nature of the seasonality. This can be either a number indicating the number of observations in each seasonal period, or text to indicate the duration of the seasonal window (for example, annual seasonality would be "1 year"). \cr
+  `K`        \tab The maximum order of the fourier terms.\cr
+  `origin`   \tab An optional time value to act as the starting time for the fourier series.
+}
+}
+
 \subsection{xreg}{
 Exogenous regressors can be included in a GAM model without explicitly using the `xreg()` special.
-Specials as specified in [`specials_gam`] can also be used.
 \preformatted{
 xreg(...)
 }
