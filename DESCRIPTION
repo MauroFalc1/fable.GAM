@@ -27,3 +27,7 @@ Imports:
     utils
 URL: https://github.com/MauroFalc1/fable.GAM
 BugReports: https://github.com/MauroFalc1/fable.GAM/issues
+Suggests: 
+    knitr,
+    rmarkdown
+VignetteBuilder: knitr

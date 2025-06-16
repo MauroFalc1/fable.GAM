@@ -1,0 +1,80 @@
+---
+title: "Introduction to the fable interface for GAM"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to the fable interface for GAM}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+`fable.GAM` brings generalized additive models (GAMs) into the `fable` modelling framework. Under the hood it relies on the `gam()` function from the [`gam`](https://cran.r-project.org/package=gam) package implemented by Trevor Hastie and Robert Tibshirani. The approach is described in their textbook [*Introduction to Statistical Learning*](https://www.statlearning.com/). This short vignette demonstrates how to estimate and forecast a GAM and how it fits alongside other `fable` models.
+
+```{r setup, message=FALSE}
+library(fable.GAM)
+library(fable.prophet)
+library(fable)
+library(tsibble)
+library(dplyr)
+library(tsibbledata) # for example data
+```
+
+The monthly `USAccDeaths` data will be used throughout this introduction.
+
+```{r}
+deaths <- as_tsibble(USAccDeaths) %>%
+  rename(Month=index,Deaths=value)
+deaths
+```
+
+## A simple GAM model
+
+```{r}
+fit <- deaths %>%
+  model(GAM = GAM(log(Deaths) ~ trend() + season()))
+report(fit)
+```
+
+## Forecasting
+
+```{r}
+fc <- fit %>% forecast(h = "2 years")
+fc
+```
+
+```{r, fig.height=4}
+autoplot(fc, deaths)
+```
+
+## Comparing with other fable models
+
+GAM models integrate with other `fable` models, allowing them to be estimated and compared together. The following code shows how you might fit ARIMA, ETS, TSLM and Prophet models alongside GAM. The Prophet example requires the `fable.prophet` package.
+
+```{r compare, eval=FALSE}
+split_month <- yearmonth("1977 Dec")
+
+deaths_train <- deaths %>%
+  filter(Month<=split_month)
+
+deaths_test <- deaths %>%
+  filter(Month>split_month)
+
+fits <- deaths_train %>%
+  model(
+    ARIMA   = ARIMA(log(Deaths)),
+    ETS     = ETS(log(Deaths)),
+    TSLM    = TSLM(log(Deaths) ~ trend() + season()),
+    GAM     = GAM(log(Deaths) ~ trend() + season()),
+    Prophet = prophet(log(Deaths) ~ season("year"))
+  )
+fc_all <- fits %>% forecast(h = "2 years")
+autoplot(fc_all, deaths)
+```
+
+The GAM model can be analysed with the standard tools provided by `fable`, such as `glance()`, `tidy()`, `accuracy()` and more, in the same way as other model classes.
