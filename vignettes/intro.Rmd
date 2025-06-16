@@ -56,7 +56,7 @@ autoplot(fc, deaths)
 
 GAM models integrate with other `fable` models, allowing them to be estimated and compared together. The following code shows how you might fit ARIMA, ETS, TSLM and Prophet models alongside GAM. The Prophet example requires the `fable.prophet` package.
 
-```{r compare, eval=FALSE}
+```{r compare}
 split_month <- yearmonth("1977 Dec")
 
 deaths_train <- deaths %>%
@@ -73,8 +73,17 @@ fits <- deaths_train %>%
     GAM     = GAM(log(Deaths) ~ trend() + season()),
     Prophet = prophet(log(Deaths) ~ season("year"))
   )
-fc_all <- fits %>% forecast(h = "2 years")
+fc_all <- fits %>% forecast(h = NROW(deaths_test))
 autoplot(fc_all, deaths)
 ```
 
-The GAM model can be analysed with the standard tools provided by `fable`, such as `glance()`, `tidy()`, `accuracy()` and more, in the same way as other model classes.
+And then compute some accuracy measures:
+
+```{r accuracy}
+fc_all %>%
+  accuracy(deaths_test) %>%
+  arrange(MAPE)
+```
+
+
+The GAM model can be analysed with the standard tools provided by `fable`, such as `glance()`, `tidy()`, `generate()`,`interpolate()` and more, in the same way as other model classes.
