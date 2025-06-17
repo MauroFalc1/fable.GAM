@@ -10,7 +10,9 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
 )
 ```
 
@@ -23,11 +25,12 @@ library(fable)
 library(tsibble)
 library(dplyr)
 library(tsibbledata) # for example data
+library(ggplot2) # for visualization
 ```
 
 The monthly `USAccDeaths` data will be used throughout this introduction.
 
-```{r}
+```{r dataset}
 deaths <- as_tsibble(USAccDeaths) %>%
   rename(Month=index,Deaths=value)
 deaths
@@ -35,7 +38,7 @@ deaths
 
 ## A simple GAM model
 
-```{r}
+```{r monofit}
 fit <- deaths %>%
   model(GAM = GAM(log(Deaths) ~ trend() + season()))
 report(fit)
@@ -43,12 +46,12 @@ report(fit)
 
 ## Forecasting
 
-```{r}
+```{r monofcst}
 fc <- fit %>% forecast(h = "2 years")
 fc
 ```
 
-```{r, fig.height=4}
+```{r monoforecast-plot}
 autoplot(fc, deaths)
 ```
 
@@ -77,13 +80,85 @@ fc_all <- fits %>% forecast(h = NROW(deaths_test))
 autoplot(fc_all, deaths)
 ```
 
-And then compute some accuracy measures:
+## Accuracy measures
 
 ```{r accuracy}
 fc_all %>%
-  accuracy(deaths_test) %>%
+  accuracy(deaths) %>%
   arrange(MAPE)
 ```
 
+## Extract components from a GAM model
 
-The GAM model can be analysed with the standard tools provided by `fable`, such as `glance()`, `tidy()`, `generate()`,`interpolate()` and more, in the same way as other model classes.
+```{r components}
+fit %>%
+  components()
+```
+
+```{r components-plot}
+fit %>%
+  components() %>%
+  autoplot()
+```
+
+
+## Simulate future paths from a GAM model
+
+```{r generate}
+sim <- fit %>%
+  generate(h = "2 years", times = 5, bootstrap = TRUE)
+sim
+```
+
+```{r generate-plot}
+deaths %>%
+  ggplot(aes(x = Month)) +
+  geom_line(aes(y = Deaths)) +
+  geom_line(aes(y = .sim, colour = as.factor(.rep)), data = sim) +
+  guides(col = "none")
+
+```
+
+## Simulate past occurrances from a GAM model
+
+```{r generate past}
+sim_past <- fit %>%
+  generate(deaths, times = 5, bootstrap = TRUE)
+```
+
+```{r generate past-plot}
+deaths %>%
+  ggplot(aes(x = Month)) +
+  geom_line(aes(y = Deaths)) +
+  geom_line(aes(y = .sim, colour = as.factor(.rep)), data = sim_past) +
+  guides(col = "none")
+
+```
+
+## Interpolate missing values from a GAM model
+
+```{r turn NAs}
+deaths %>% 
+  filter(row_number() %in% c(4,33,51))
+```
+
+```{r interpolate NAs}
+deaths_na <- deaths %>%
+  mutate(Deaths=case_when(row_number() %in% c(4,33,51) ~ NA,
+                          TRUE ~ Deaths)) 
+deaths_na_interp <- deaths_na %>%
+  model(GAM = GAM(log(Deaths) ~ trend() + season())) %>%
+  interpolate(deaths_na)
+
+deaths_na_interp %>%
+  filter(row_number() %in% c(4,33,51))
+```
+
+```{r interpolate plot}
+deaths_na %>%
+  ggplot(aes(x = Month)) +
+  geom_line(aes(y = Deaths, colour = "red"), data = deaths_na_interp) +
+  geom_line(aes(y = Deaths)) +
+  guides(col = "none")
+```
+

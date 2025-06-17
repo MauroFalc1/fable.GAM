@@ -733,6 +733,7 @@ interpolate.GAM <- function(object, new_data, specials) {
 #' Extract components from a GAM model
 #'
 #' @param object A fitted model of class GAM.
+#' @param simplify Choose whether to sum-up all trend and seasonal effects, respectively.
 #' @param ... Currently ignored.
 #'
 #' @return A [`fabletools::dable`] whose columns sum to `.response` *exactly*.
@@ -742,7 +743,7 @@ interpolate.GAM <- function(object, new_data, specials) {
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   components()
 #' @export
-components.GAM <- function(object, ...) {
+components.GAM <- function(object, simplify = TRUE, ...) {
   # ── Guards ---------------------------------------------------------------
   if (!inherits(object, "GAM")) {
     abort("`components.GAM()` expects an object of class 'GAM'.")
@@ -755,6 +756,29 @@ components.GAM <- function(object, ...) {
   # Per‑term contributions (link scale) —— returned matrix has attr "constant"
   term_mat <- stats::predict(object, type = "terms", se.fit = FALSE)
   term_tbl <- tibble::as_tibble(term_mat, .name_repair = "minimal")
+
+  if (simplify) {
+    trend_term_tbl <- term_tbl %>%
+      dplyr::select(starts_with("s(trend")) %>%
+      dplyr::mutate("trends" = rowSums(., na.rm = TRUE), .keep = "none")
+    season_term_tbl <- term_tbl %>%
+      dplyr::select(
+        starts_with(c(
+          "season_", "year", "quarter",
+          "month", "week", "day"
+        )),
+        matches("^[SC]\\d+_\\d+$")
+      ) %>%
+      dplyr::mutate("seasonalities" = rowSums(., na.rm = TRUE), .keep = "none")
+    term_tbl <- dplyr::bind_cols(trend_term_tbl, season_term_tbl, term_tbl %>%
+                                   dplyr::select(
+                                     -starts_with(c(
+                                       "s(trend", "season_", "year", "quarter",
+                                       "month", "week", "day"
+                                     )),
+                                     -matches("^[SC]\\d+_\\d+$")
+                                   ))
+  }
 
   # Make every column name syntactically valid **and** match what `all.vars()`
   # will pull out of the alias expression (→ important for `autoplot()`)

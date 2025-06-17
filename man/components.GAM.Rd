@@ -4,10 +4,12 @@
 \alias{components.GAM}
 \title{Extract components from a GAM model}
 \usage{
-\method{components}{GAM}(object, ...)
+\method{components}{GAM}(object, simplify = TRUE, ...)
 }
 \arguments{
 \item{object}{A fitted model of class GAM.}
+
+\item{simplify}{Choose whether to sum-up all trend and seasonal effects, respectively.}
 
 \item{...}{Currently ignored.}
 }
