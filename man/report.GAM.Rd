@@ -25,6 +25,7 @@ In particular it makes use of the `anova` and `parametric.anova` tables
 returned by `summary.gam()`.
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   report()

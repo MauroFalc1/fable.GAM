@@ -23,6 +23,7 @@ smooth term. This parallels the behaviour of `broom::tidy.glm()` but is
 adapted for the **gam** package’s output.
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   tidy()

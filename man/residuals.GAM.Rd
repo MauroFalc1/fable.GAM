@@ -24,6 +24,7 @@ A vector of fitted residuals.
 Extracts the residuals.
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   residuals()
