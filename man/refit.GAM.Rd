@@ -19,6 +19,7 @@
 Applies a fitted `GAM` to a new dataset.
 }
 \examples{
+library(fabletools)
 lung_deaths_male <- as_tsibble(mdeaths)
 lung_deaths_female <- as_tsibble(fdeaths)
 

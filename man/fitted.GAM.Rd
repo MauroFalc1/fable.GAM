@@ -18,6 +18,7 @@ A vector of fitted values.
 Extracts the fitted values.
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   fitted()

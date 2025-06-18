@@ -37,6 +37,7 @@ A list of forecasts.
 Produces forecasts from a trained model as in the `fable` package.
 }
 \examples{
+library(fabletools)
 USAccDeaths \%>\%
   as_tsibble() \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%

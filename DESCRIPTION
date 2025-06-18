@@ -21,13 +21,18 @@ Imports:
     gam,
     Rcpp,
     rlang,
+    statmod,
     stats,
     tibble,
-    tsibble,
-    utils
+    tsibble
 URL: https://github.com/MauroFalc1/fable.GAM
 BugReports: https://github.com/MauroFalc1/fable.GAM/issues
 Suggests: 
+    fable,
+    fable.prophet,
+    ggplot2,
     knitr,
-    rmarkdown
+    rmarkdown,
+    tsibbledata,
+    utils
 VignetteBuilder: knitr

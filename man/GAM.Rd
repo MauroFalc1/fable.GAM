@@ -8,6 +8,8 @@ GAM(formula, ...)
 }
 \arguments{
 \item{formula}{Model specification.}
+
+\item{...}{Any other orguments being passed to [`gam::gam()`]}
 }
 \value{
 A model specification.
@@ -75,6 +77,7 @@ xreg(...)
 }
 
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season()))
 

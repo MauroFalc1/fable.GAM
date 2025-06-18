@@ -19,6 +19,7 @@ A one-row `tibble` with columns such as `r.squared`, `adj.r.squared`,
 Returns a one-row tibble summarizing the model's fit.
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   glance()

@@ -23,6 +23,7 @@
 Generate future sample paths from a <GAM> model
 }
 \examples{
+library(fabletools)
 as_tsibble(USAccDeaths) \%>\%
   model(gam = GAM(log(value) ~ trend() + season())) \%>\%
   generate()

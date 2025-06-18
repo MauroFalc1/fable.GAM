@@ -4,7 +4,7 @@ remove_specials <- function(formula, specials = NULL) {
   response <- deparse(formula[[2]])
 
   # Extract terms object
-  tt <- terms(formula, specials = if (is.null(specials)) character() else specials)
+  tt <- stats::terms(formula, specials = if (is.null(specials)) character() else specials)
   rhs_terms <- attr(tt, "term.labels")
 
   # Detect specials if not provided
@@ -21,13 +21,13 @@ remove_specials <- function(formula, specials = NULL) {
   keep_terms <- rhs_terms[!grepl(pattern, rhs_terms)]
 
   # Rebuild the cleaned formula
-  reformulate(keep_terms, response = response)
+  stats::reformulate(keep_terms, response = response)
 }
 
 # EXTRACT SPECIALS FROM FORMULA
 extract_specials <- function(formula, specials = NULL) {
   # Extract terms object with or without user-provided specials
-  tt <- terms(formula, specials = if (is.null(specials)) character() else specials)
+  tt <- stats::terms(formula, specials = if (is.null(specials)) character() else specials)
   rhs_terms <- attr(tt, "term.labels")
 
   # Detect specials automatically if not given
@@ -57,7 +57,7 @@ trendify <- function(.dat,expr=FALSE,keep_all=TRUE, knots = NULL, origin = NULL)
     frml <- str2lang(paste0(names(trnd),collapse = " + "))
   }else{frml=NULL}
   if (keep_all) {
-    trnd <- bind_cols(.dat,trnd)
+    trnd <- dplyr::bind_cols(.dat,trnd)
   }
   return(Filter(Negate(is.null), list(data=trnd,expr=frml)))
 }
@@ -69,7 +69,7 @@ seasonify <- function(.dat,expr=FALSE,keep_all=TRUE, period = NULL){
     frml <- str2lang(paste0(names(ssn),collapse = " + "))
   }else{frml=NULL}
   if (keep_all) {
-    ssn <- bind_cols(.dat,ssn)
+    ssn <- dplyr::bind_cols(.dat,ssn)
   }
   return(Filter(Negate(is.null), list(data=ssn,expr=frml)))
 }
@@ -85,7 +85,7 @@ fourierify <- function(.dat,expr=FALSE,keep_all=TRUE,period, K, origin = NULL){
     frml <- str2lang(paste0(names(frr),collapse = " + "))
   }else{frml=NULL}
   if (keep_all) {
-    frr <- bind_cols(.dat,frr)
+    frr <- dplyr::bind_cols(.dat,frr)
   }
   return(Filter(Negate(is.null), list(data=frr,expr=frml)))
 }
@@ -104,9 +104,9 @@ add_specials <- function(formula, data, left=TRUE) {
 
   # Update the formula:   lhs ~ old_rhs + var1 + var2 + ...
   if (left) {
-    return(update(formula, paste("~",extras,"+.")))
+    return(stats::update(formula, paste("~",extras,"+.")))
   }else{
-    return(update(formula, paste("~ . +", extras)))
+    return(stats::update(formula, paste("~ . +", extras)))
   }
 }
 
@@ -119,12 +119,12 @@ as_model_matrix <- function(tbl) {
 
 
 gam_se <- function(object, new_data) {
-  terms_x <- delete.response(terms(object))
-  X_new <- model.matrix(terms_x, new_data)
+  terms_x <- stats::delete.response(stats::terms(object))
+  X_new <- stats::model.matrix(terms_x, new_data)
   Vb <- tryCatch(vcov(object), error = function(e) NULL)
 
   if (is.null(Vb) || ncol(X_new) != ncol(Vb)) {
-    sigma <- sqrt(mean(residuals(object)^2, na.rm = TRUE))
+    sigma <- sqrt(mean(stats::residuals(object)^2, na.rm = TRUE))
     return(rep(sigma, NROW(new_data)))  # Fix: return vector
   }
 
@@ -138,7 +138,7 @@ gam_se <- function(object, new_data) {
     d_inv_link <- switch(link_fun,
                          "log" = exp(eta_hat),
                          "logit" = exp(eta_hat) / (1 + exp(eta_hat))^2,
-                         "probit" = dnorm(eta_hat),
+                         "probit" = stats::dnorm(eta_hat),
                          "inverse" = -1 / eta_hat^2,
                          stop(paste("Link function", link_fun, "not supported"))
     )

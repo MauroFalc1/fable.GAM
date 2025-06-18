@@ -4,7 +4,7 @@
 \alias{interpolate.GAM}
 \title{Interpolate missing values from a fable model}
 \usage{
-\method{interpolate}{GAM}(object, new_data, specials)
+\method{interpolate}{GAM}(object, new_data, specials, ...)
 }
 \arguments{
 \item{object}{A model for which forecasts are required.}
@@ -12,6 +12,8 @@
 \item{new_data}{A tsibble containing the time points and exogenous regressors to produce forecasts for.}
 
 \item{specials}{(passed by \code{\link[fabletools:forecast]{fabletools::forecast.mdl_df()}}).}
+
+\item{...}{Other arguments passed to methods}
 }
 \value{
 A tibble of the same dimension of \code{new_data} with missing values interpolated.
@@ -20,6 +22,7 @@ A tibble of the same dimension of \code{new_data} with missing values interpolat
 Applies a model-specific estimation technique to predict the values of missing values in a \code{tsibble}, and replace them.
 }
 \examples{
+library(fabletools)
 library(tsibbledata)
 
 olympic_running \%>\%

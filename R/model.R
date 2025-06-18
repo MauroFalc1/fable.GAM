@@ -28,13 +28,13 @@ train_gam <- function(.data, specials, ...) {
   dtt <- self$data
   fml <- self$formula
   idx <- dtt %>% dplyr::pull(tsibble::index(dtt))
-  av <- all.vars(terms.formula(fml))
+  av <- all.vars(stats::terms.formula(fml))
   mv <- tsibble::measured_vars(.data)
   if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- .data[[mv]]
   dtt <- dplyr::bind_cols(
     tibble("t_response" = y),
-    dplyr::as_tibble(dtt) %>% dplyr::select(all_of(av[-1]))
+    dplyr::as_tibble(dtt) %>% dplyr::select(dplyr::all_of(av[-1]))
   )
   fml <- rlang::new_formula(lhs = quote(t_response), rhs = fml[[3]])
   obj <- build_gam_vars(data = dtt, fml = fml, specials = specials)
@@ -156,6 +156,7 @@ specials_gam <- fabletools::new_specials(
 #' and `fourier()`.
 #'
 #' @param formula Model specification.
+#' @param ... Any other orguments being passed to [`gam::gam()`]
 #'
 #' @section Specials:
 #'
@@ -217,6 +218,7 @@ specials_gam <- fabletools::new_specials(
 #' [An Introduction to Statistical Learning, Moving Beyond Linearity (chapter 7)](https://www.statlearning.com/)
 #'
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season()))
 #'
@@ -244,6 +246,7 @@ GAM <- function(formula, ...) {
 #'
 #' @returns A list of forecasts.
 #' @examples
+#' library(fabletools)
 #' USAccDeaths %>%
 #'   as_tsibble() %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
@@ -363,6 +366,7 @@ forecast.GAM <- function(object,
 #' @inherit fable::fitted.ARIMA
 #'
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   fitted()
@@ -377,6 +381,7 @@ fitted.GAM <- function(object, ...) {
 #' @inherit fable::residuals.ARIMA
 #'
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   residuals()
@@ -406,6 +411,7 @@ residuals.Gam <- residuals.GAM
 #'   `deviance`, `df.residual`, `log_lik`, `AIC`, `BIC`, `dispersion`, and `nobs`.
 #'
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   glance()
@@ -451,6 +457,7 @@ glance.GAM <- function(x, ...) {
 #'
 #' @return (Invisibly) returns `object` so the call can be piped/assigned.
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   report()
@@ -483,7 +490,7 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   if (!is.null(sm$parametric.anova)) {
     cat("\nParametric terms (Wald tests)\n")
     cli_line()
-    printCoefmat(sm$parametric.anova,
+    stats::printCoefmat(sm$parametric.anova,
       digits = digits, signif.stars = TRUE,
       P.values = TRUE, na.print = "NA"
     )
@@ -493,7 +500,7 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   if (!is.null(sm$anova)) {
     cat("\nSmooth terms (Approx. chi-square tests)\n")
     cli_line()
-    printCoefmat(sm$anova,
+    stats::printCoefmat(sm$anova,
       digits = digits, signif.stars = TRUE,
       P.values = TRUE, has.Pvalue = TRUE, na.print = "NA"
     )
@@ -557,6 +564,7 @@ format.GAM <- function(x, ...) {
 #'
 #' @return A `tibble` with one row per term.
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   tidy()
@@ -615,6 +623,7 @@ tidy.GAM <- function(x, include_smooth = TRUE, ...) {
 #' @param times Integer. Number of simulated paths to produce. Default 1.
 #'
 #' @examples
+#' library(fabletools)
 #' as_tsibble(USAccDeaths) %>%
 #'   model(gam = GAM(log(value) ~ trend() + season())) %>%
 #'   generate()
@@ -645,6 +654,7 @@ generate.GAM <- function(x,
 #' @inheritParams fable::refit.ARIMA
 #'
 #' @examples
+#' library(fabletools)
 #' lung_deaths_male <- as_tsibble(mdeaths)
 #' lung_deaths_female <- as_tsibble(fdeaths)
 #'
@@ -669,7 +679,7 @@ refit.GAM <- function(object,
 
   # 1 ── Extract original specification ───────────────────────────────────────
   gam_formula <- stats::formula(object) # stored by gam::gam
-  # av <- all.vars(terms.formula(gam_formula))
+  # av <- all.vars(stats::terms.formula(gam_formula))
   mv <- tsibble::measured_vars(new_data)
   if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- new_data[[mv]]
@@ -698,13 +708,14 @@ refit.GAM <- function(object,
 #' @inherit fable::interpolate.ARIMA
 #'
 #' @examples
+#' library(fabletools)
 #' library(tsibbledata)
 #'
 #' olympic_running %>%
 #'   model(gam = GAM(Time ~ trend())) %>%
 #'   interpolate(olympic_running)
 #' @export
-interpolate.GAM <- function(object, new_data, specials) {
+interpolate.GAM <- function(object, new_data, specials, ...) {
   # Get missing values
   y <- unclass(new_data)[[tsibble::measured_vars(new_data)]]
   miss_val <- which(is.na(y))
@@ -759,24 +770,24 @@ components.GAM <- function(object, simplify = TRUE, ...) {
 
   if (simplify) {
     trend_term_tbl <- term_tbl %>%
-      dplyr::select(starts_with("s(trend")) %>%
+      dplyr::select(dplyr::starts_with("s(trend")) %>%
       dplyr::mutate("trends" = rowSums(., na.rm = TRUE), .keep = "none")
     season_term_tbl <- term_tbl %>%
       dplyr::select(
-        starts_with(c(
+        dplyr::starts_with(c(
           "season_", "year", "quarter",
           "month", "week", "day"
         )),
-        matches("^[SC]\\d+_\\d+$")
+        dplyr::matches("^[SC]\\d+_\\d+$")
       ) %>%
       dplyr::mutate("seasonalities" = rowSums(., na.rm = TRUE), .keep = "none")
     term_tbl <- dplyr::bind_cols(trend_term_tbl, season_term_tbl, term_tbl %>%
                                    dplyr::select(
-                                     -starts_with(c(
+                                     -dplyr::starts_with(c(
                                        "s(trend", "season_", "year", "quarter",
                                        "month", "week", "day"
                                      )),
-                                     -matches("^[SC]\\d+_\\d+$")
+                                     -dplyr::matches("^[SC]\\d+_\\d+$")
                                    ))
   }
 
