@@ -74,7 +74,7 @@ fits <- deaths_train %>%
     ETS     = ETS(log(Deaths)),
     TSLM    = TSLM(log(Deaths) ~ trend() + season()),
     GAM     = GAM(log(Deaths) ~ trend() + season()),
-    Prophet = prophet(log(Deaths) ~ season("year"))
+    Prophet = prophet(log(Deaths) ~ growth("linear") + season("year"))
   )
 fc_all <- fits %>% forecast(h = NROW(deaths_test))
 autoplot(fc_all, deaths)
