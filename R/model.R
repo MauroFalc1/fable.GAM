@@ -42,6 +42,7 @@ train_gam <- function(.data, specials, ...) {
   gam_formula <- obj$gam_formula
   fit <- gam::gam(gam_formula, data = gam_data, ...)
   fit$index <- idx
+  fit$aicc <- fit$aic + (2*(fit$df.null-fit$df.residual+1)^2+2*(fit$df.null-fit$df.residual+1))/fit$df.residual
   structure(fit, class = c("GAM", class(fit)))
 }
 
@@ -435,6 +436,7 @@ glance.GAM <- function(x, ...) {
     df.residual    = stats::df.residual(x),
     log_lik        = as.numeric(stats::logLik(x)), # Ensure it's a plain number
     AIC            = stats::AIC(x),
+    AICc           = x$aicc,
     BIC            = stats::BIC(x),
     dispersion     = dispersion_val,
     nobs           = stats::nobs(x) %||% length(x$residuals) # Number of observations
