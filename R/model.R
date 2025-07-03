@@ -40,7 +40,9 @@ train_gam <- function(.data, specials, ...) {
   obj <- build_gam_vars(data = dtt, fml = fml, specials = specials)
   gam_data <- obj$gam_data
   gam_formula <- obj$gam_formula
-  fit <- gam::gam(gam_formula, data = gam_data, ...)
+  fit <- gam::gam(formula = gam_formula, data = gam_data, ...)
+  fit$call$formula <- gam_formula
+  fit$call$data <- gam_data
   fit$index <- idx
   fit$aicc <- fit$aic + (2*(fit$df.null-fit$df.residual+1)^2+2*(fit$df.null-fit$df.residual+1))/fit$df.residual
   structure(fit, class = c("GAM", class(fit)))
