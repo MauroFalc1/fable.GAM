@@ -46,13 +46,16 @@ extract_specials <- function(formula, specials = NULL) {
   rhs_terms[grepl(pattern, rhs_terms)]
 }
 
+fbl_trend   <- getFromNamespace("fbl_trend",   "fabletools")
+fbl_season  <- getFromNamespace("fbl_season",  "fabletools")
+fbl_fourier <- getFromNamespace("fbl_fourier", "fabletools")
 
 trendify <- function(.dat,expr=FALSE,keep_all=TRUE, knots = NULL, origin = NULL){
   if (is.null(origin)) {
     origin <- .dat[[index_var(.dat)]][[1]]
   }
   trnd <- .dat %>%
-    fabletools:::fbl_trend(knots = knots,origin = origin)
+    fbl_trend(knots = knots,origin = origin)
   if (expr) {
     frml <- str2lang(paste0(names(trnd),collapse = " + "))
   }else{frml=NULL}
@@ -64,7 +67,7 @@ trendify <- function(.dat,expr=FALSE,keep_all=TRUE, knots = NULL, origin = NULL)
 
 seasonify <- function(.dat,expr=FALSE,keep_all=TRUE, period = NULL){
   ssn <- .dat %>%
-    fabletools:::fbl_season(period = period)
+    fbl_season(period = period)
   if (expr) {
     frml <- str2lang(paste0(names(ssn),collapse = " + "))
   }else{frml=NULL}
@@ -80,7 +83,7 @@ fourierify <- function(.dat,expr=FALSE,keep_all=TRUE,period, K, origin = NULL){
     origin <- .dat[[index_var(.dat)]][[1]]
   }
   frr <- .dat %>%
-    fabletools:::fbl_fourier(period = period, K = K, origin = origin)
+    fbl_fourier(period = period, K = K, origin = origin)
   if (expr) {
     frml <- str2lang(paste0(names(frr),collapse = " + "))
   }else{frml=NULL}
@@ -156,10 +159,10 @@ gam_se <- function(object, new_data) {
 build_gam_data <- function(new_data, specials) {
   # Mirror the logic inside forecast.GAM() --------------------------------
   dtt       <- dplyr::as_tibble(new_data)
-  .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
+  # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
   .trend    <- specials$trend[[1]]
-  .season   <- specials$season[[1]]    |> dplyr::as_tibble()
-  .fourier  <- specials$fourier[[1]]   |> dplyr::as_tibble()
+  .season   <- specials$season[[1]]    #|> dplyr::as_tibble()
+  .fourier  <- specials$fourier[[1]]   #|> dplyr::as_tibble()
 
   if (!is.null(.trend)) {
     dtt <- dplyr::bind_cols(dtt, .trend$data)
@@ -174,10 +177,10 @@ build_gam_data <- function(new_data, specials) {
 build_gam_vars <- function(data,fml, specials) {
   # Mirror the logic inside train_GAM() --------------------------------
   dtt       <- dplyr::as_tibble(data)
-  .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
+  # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
   .trend    <- specials$trend[[1]]
-  .season   <- specials$season[[1]]    |> dplyr::as_tibble()
-  .fourier  <- specials$fourier[[1]]   |> dplyr::as_tibble()
+  .season   <- specials$season[[1]]    #|> dplyr::as_tibble()
+  .fourier  <- specials$fourier[[1]]   #|> dplyr::as_tibble()
 
   if (!is.null(.trend)) {
     dtt <- dplyr::bind_cols(dtt, .trend$data)
@@ -239,3 +242,5 @@ gam_draw_innov <- function(x,gam_data,mu=NULL,bootstrap=FALSE) {
     )
   }
 }
+
+

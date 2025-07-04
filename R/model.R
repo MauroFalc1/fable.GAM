@@ -33,16 +33,15 @@ train_gam <- function(.data, specials, ...) {
   if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- .data[[mv]]
   dtt <- dplyr::bind_cols(
-    tibble("t_response" = y),
+    tibble::tibble("t_response" = y),
     dplyr::as_tibble(dtt) %>% dplyr::select(dplyr::all_of(av[-1]))
   )
   fml <- rlang::new_formula(lhs = quote(t_response), rhs = fml[[3]])
   obj <- build_gam_vars(data = dtt, fml = fml, specials = specials)
   gam_data <- obj$gam_data
   gam_formula <- obj$gam_formula
-  fit <- gam::gam(formula = gam_formula, data = gam_data, ...)
-  fit$call$formula <- gam_formula
-  fit$call$data <- gam_data
+  fit <- do.call(gam::gam,list(formula = gam_formula, data = gam_data, ...))
+  fit$.data <- .data
   fit$index <- idx
   fit$aicc <- fit$aic + (2*(fit$df.null-fit$df.residual+1)^2+2*(fit$df.null-fit$df.residual+1))/fit$df.residual
   structure(fit, class = c("GAM", class(fit)))
@@ -109,7 +108,7 @@ specials_gam <- fabletools::new_specials(
       }
       origin <- self$origin
     }
-    out.dat <- fabletools:::fbl_trend(self$data, knots, origin)
+    out.dat <- fbl_trend(self$data, knots, origin)
     if (linear) {
       out.str <- paste0(names(out.dat), collapse = " + ")
       out.expr <- rlang::expr(!!paste0(names(out.dat), collapse = " + "))
@@ -122,16 +121,20 @@ specials_gam <- fabletools::new_specials(
       } else {
         out.expr <- rlang::call2("+", !!!calls)
       }
-      out.str <- deparse(out.expr)
+      out.str <- deparse1(out.expr)
     }
     return(list(data = out.dat, expr = out.expr, str = out.str))
   },
   season = function(period = NULL) {
-    out <- as_model_matrix(fabletools:::fbl_season(
-      self$data,
-      period
-    ))
-    stats::model.matrix(~., data = as.data.frame(out))[, -1, drop = FALSE]
+    # out <- as_model_matrix(fbl_season(
+    #   self$data,
+    #   period
+    # ))
+    # stats::model.matrix(~., data = as.data.frame(out))[, -1, drop = FALSE]
+    fbl_season(
+        self$data,
+        period
+      )
   },
   fourier = function(period = NULL, K, origin = NULL) {
     if (is.null(origin)) {
@@ -140,10 +143,14 @@ specials_gam <- fabletools::new_specials(
       }
       origin <- self$origin
     }
-    as.matrix(fabletools:::fbl_fourier(
+    # as.matrix(fbl_fourier(
+    #   self$data, period, K,
+    #   origin
+    # ))
+    fbl_fourier(
       self$data, period, K,
       origin
-    ))
+    )
   },
   xreg = fabletools::special_xreg(default_intercept = FALSE),
   .required_specials = NULL # ,
@@ -696,13 +703,15 @@ refit.GAM <- function(object,
   # 3 ── Build model frame for the new data ───────────────────────────────────
 
   # 4 ── Fit the GAM on the updated data ──────────────────────────────────────
-  refit_obj <- gam::gam(
-    formula = gam_formula,
-    family  = gam_family,
-    data    = gam_data,
-    ...
-  )
-
+  # refit_obj <- gam::gam(
+  #   formula = gam_formula,
+  #   family  = gam_family,
+  #   data    = gam_data,
+  #   ...
+  # )
+  refit_obj <- do.call(gam::gam,list(formula = gam_formula,
+                                     family  = gam_family,
+                                     data = gam_data, ...))
   # 5 ── Preserve the custom GAM class and any needed attributes ──────────────
   #      (add back 'specials' so generate()/forecast()/interpolate() keep working)
   refit_obj$index <- new_data %>% dplyr::pull(tsibble::index(new_data))
@@ -765,7 +774,9 @@ components.GAM <- function(object, simplify = TRUE, ...) {
   }
 
   # ── 1. Core pieces ------------------------------------------------------
-  resp <- stats::fitted(object) # response‑scale fitted values
+  resp <- object$y
+  fitt <- object$fitted.values # response‑scale fitted values
+  resi <- object$residuals
   n <- length(resp)
 
   # Per‑term contributions (link scale) —— returned matrix has attr "constant"
@@ -793,36 +804,58 @@ components.GAM <- function(object, simplify = TRUE, ...) {
                                      )),
                                      -dplyr::matches("^[SC]\\d+_\\d+$")
                                    ))
+  }else{
+    trend_term_tbl <- term_tbl %>%
+      dplyr::select(dplyr::starts_with("s(trend"))
+    season_term_tbl <- term_tbl %>%
+      dplyr::select(
+        dplyr::starts_with(c(
+          "season_", "year", "quarter",
+          "month", "week", "day"
+        )),
+        dplyr::matches("^[SC]\\d+_\\d+$")
+      )
   }
 
   # Make every column name syntactically valid **and** match what `all.vars()`
   # will pull out of the alias expression (→ important for `autoplot()`)
   original <- names(term_tbl)
-  cleaned <- vapply(original, make.names, FUN.VALUE = character(1), unique = TRUE)
-  names(term_tbl) <- cleaned
+  cleaned <- original
+  # cleaned <- vapply(original, make.names, FUN.VALUE = character(1), unique = TRUE)
+  # names(term_tbl) <- cleaned
 
   # Intercept (scalar) recycled to n rows
   icpt <- attr(term_mat, "constant")
   intercept <- rep_len(icpt, n)
 
   # ── 2. Build a tsibble ---------------------------------------------------
+  # resp_name <- measured_vars(object$.data)[[1]]
+  resp_name <- deparse1(object$formula[[2]])
   cmp <- tibble::tibble(
     .idx      = object$index,
-    .response = resp,
+    !!resp_name := resp,
     intercept = intercept
   ) |>
     dplyr::bind_cols(term_tbl) |>
+    dplyr::mutate(
+      residuals = !!sym(resp_name) - intercept -
+        rowSums(dplyr::across(dplyr::all_of(names(term_tbl))))   # sum of every term-col
+           ) |>
     tsibble::as_tsibble(index = .idx)
 
   # ── 3. Wrap as dable -----------------------------------------------------
-  alias_expr <- rlang::parse_expr( # .response ≡ sum(components)
-    paste(c("intercept", cleaned), collapse = " + ")
+  aliases <- rlang::list2(
+    !!resp_name := purrr::reduce(syms(c("intercept", cleaned,"residuals")), function(x, y, fn) rlang::call2(fn, x, y), "+"),
+    "season_adjust" = purrr::reduce(syms(c("intercept", names(trend_term_tbl),"residuals")), function(x, y, fn) rlang::call2(fn, x, y), "+"),
+    "trend_adjust"  = purrr::reduce(syms(c("intercept", names(season_term_tbl),"residuals")), function(x, y, fn) rlang::call2(fn, x, y), "+"),
+    ".fitted" = purrr::reduce(syms(c(resp_name,"residuals")), function(x, y, fn) rlang::call2(fn, x, y), "-")
   )
 
   fabletools::as_dable(
     cmp,
-    resp = !!rlang::sym(".response"),
+    response = !!sym(resp_name),
+    seasons = list(seasonalities = list(period = object$index %>% fabletools::common_periods(),base = 0)),
     method = "GAM",
-    aliases = rlang::set_names(list(alias_expr), ".response")
+    aliases = aliases
   )
 }
