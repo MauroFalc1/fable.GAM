@@ -162,3 +162,11 @@ deaths_na %>%
   guides(col = "none")
 ```
 
+## Draw partial contribution plots from a GAM model
+
+
+```{r partial plot}
+fit %>%
+  plot_partial_effects(se = TRUE)
+```
+

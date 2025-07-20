@@ -859,3 +859,28 @@ components.GAM <- function(object, simplify = TRUE, ...) {
     aliases = aliases
   )
 }
+
+
+
+#' Partial Effect Plots for GAM
+#'
+#' The plots show the component contributions, on the link scale, of each model term to the linear predictor.
+#'
+#' @param x A mable object.
+#' @param ... Further arguments for methods.
+#'
+#' @seealso [`gam::plot.Gam()`]
+#'
+#' @export
+plot_partial_effects <- function(x,
+                                 se    = TRUE,
+                                 ...) {
+  is_gam <- vapply(                               # iterate over the top level
+    fits,                                         # each element is a list‑column
+    function(col) any(vapply(col,                 # look at every model in column
+                             function(mdl) inherits(mdl$fit, "Gam"),
+                             logical(1))),
+    logical(1)
+  )
+  ggplot.Gam(fits[is_gam][[1]][[1]]$fit,se = se,...)
+}
