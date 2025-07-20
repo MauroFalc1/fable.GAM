@@ -437,10 +437,11 @@ glance.GAM <- function(x, ...) {
     dispersion_val <- 1.0 # Theoretical dispersion
   }
 
-
+  r.sq <- 1 - x$deviance / x$null.deviance
+  r.sq.adj <- 1 - (1 - r.sq) * (x$df.residual) / (x$df.null)
   tibble::tibble(
-    # r.squared      = sumgam$r.sq %||% NA_real_,
-    # adj.r.squared  = sumgam$adj.r.sq %||% NA_real_,
+    r.squared      = sumgam$r.sq %||% r.sq,
+    adj.r.squared  = sumgam$adj.r.sq %||% r.sq.adj,
     deviance       = stats::deviance(x),
     df.residual    = stats::df.residual(x),
     log_lik        = as.numeric(stats::logLik(x)), # Ensure it's a plain number
@@ -480,6 +481,8 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   }
 
   sm <- summary(object)
+  r.sq <- 1 - object$deviance / object$null.deviance
+  r.sq.adj <- 1 - (1 - r.sq) * (object$df.residual) / (object$df.null)
 
   cli_line <- function(char = "-", n = 60) cat(strrep(char, n), "\n", sep = "")
 
@@ -511,7 +514,7 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   if (!is.null(sm$anova)) {
     cat("\nSmooth terms (Approx. chi-square tests)\n")
     cli_line()
-    stats::printCoefmat(sm$anova,
+    stats::printCoefmat(na.exclude(sm$anova),
       digits = digits, signif.stars = TRUE,
       P.values = TRUE, has.Pvalue = TRUE, na.print = "NA"
     )
@@ -525,12 +528,22 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   }
   if (!is.null(sm$r.sq)) {
     cat(sprintf("%-20s %.*f\n", "R-squared:", digits, sm$r.sq))
+  }else{
+    cat(sprintf("%-20s %.*f\n", "R-squared:", digits, r.sq))
+  }
+  if (!is.null(sm$r.sq.adj)) {
+    cat(sprintf("%-20s %.*f\n", "R-squared:", digits, sm$r.sq.adj))
+  }else{
+    cat(sprintf("%-20s %.*f\n", "R-squared Adj.:", digits, r.sq.adj))
   }
   if (!is.null(sm$dispersion)) {
     cat(sprintf("%-20s %.*f\n", "Dispersion:", digits, sm$dispersion))
   }
   if (!is.null(object$aic)) {
     cat(sprintf("%-20s %.*f\n", "AIC:", digits, object$aic))
+  }
+  if (!is.null(object$aicc)) {
+    cat(sprintf("%-20s %.*f\n", "AICc:", digits, object$aicc))
   }
   if (!is.null(sm$gcv.ubre)) {
     cat(sprintf("%-20s %.*f\n", "GCV/UBRE:", digits, sm$gcv.ubre))
