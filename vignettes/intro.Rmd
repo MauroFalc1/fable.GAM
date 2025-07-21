@@ -38,6 +38,8 @@ deaths
 
 ## A simple GAM model
 
+Let's start by fitting a GAM model with default (smoothed) trend and dummy encoding (yearly) seasonality on the log transformed response:
+
 ```{r monofit}
 fit <- deaths %>%
   model(GAM = GAM(log(Deaths) ~ trend() + season()))
@@ -45,6 +47,8 @@ report(fit)
 ```
 
 ## Forecasting
+
+Once the model is fit, we can then produce and visualize forecasts:
 
 ```{r monofcst}
 fc <- fit %>% forecast(h = "2 years")
@@ -58,6 +62,8 @@ autoplot(fc, deaths)
 ## Comparing with other fable models
 
 GAM models integrate with other `fable` models, allowing them to be estimated and compared together. The following code shows how you might fit ARIMA, ETS, TSLM and Prophet models alongside GAM. The Prophet example requires the `fable.prophet` package.
+
+In order to evaluate which of the models might be more accurate, we will split the data into a training set, onto which fit the models, and a testing set, necessary for computing accuracy metrics:
 
 ```{r compare}
 split_month <- yearmonth("1977 Dec")
@@ -82,18 +88,24 @@ autoplot(fc_all, deaths)
 
 ## Accuracy measures
 
+As promised, let's assess and compare the accuracy of each model:
+
 ```{r accuracy}
 fc_all %>%
   accuracy(deaths) %>%
   arrange(MAPE)
 ```
+From our test, it seems that the GAM model returns pretty accurate predictions.
 
 ## Extract components from a GAM model
 
+GAM models, are known to be an important tool for Statistical Learning, meaning that they could be very useful for not only predicting but understanding the modeled phenomenon. In the case of time series, one useful strategy consists in explaining the response variable by means of time-based components:
 ```{r components}
 fit %>%
   components()
 ```
+
+Inspecting these components visually enables us with an augmented explanatory power over the variability of the studied phenomenon:
 
 ```{r components-plot}
 fit %>%
@@ -103,6 +115,8 @@ fit %>%
 
 
 ## Simulate future paths from a GAM model
+
+Fitting a model, within the `fable` framework, means fitting a distribution onto every step of the stochastic process that represents the future observation of the studied phenomenon. Consequently, we can draw samples from each distribution to simulate future occurrences:
 
 ```{r generate}
 sim <- fit %>%
@@ -121,6 +135,8 @@ deaths %>%
 
 ## Simulate past occurrances from a GAM model
 
+Similarly, we can simulate occurrences at the same conditions of the observed data and visually inspect what could have occurred:
+
 ```{r generate past}
 sim_past <- fit %>%
   generate(deaths, times = 5, bootstrap = TRUE)
@@ -137,6 +153,7 @@ deaths %>%
 
 ## Interpolate missing values from a GAM model
 
+Another powerful feature of a GAM model, given its nature, allows us to impute missing observations of the response variable. For demonstration, let's take three observations and turn them into blanks; we can then fit a GAM model, like previously, and interpolate a reasonable value for them.   
 ```{r turn NAs}
 deaths %>% 
   filter(row_number() %in% c(4,33,51))
@@ -154,6 +171,8 @@ deaths_na_interp %>%
   filter(row_number() %in% c(4,33,51))
 ```
 
+By comparing the tables above and as shown by the graph below, the imputation of missing data through a GAM model provided an accurate estimate of what we censored.
+
 ```{r interpolate plot}
 deaths_na %>%
   ggplot(aes(x = Month)) +
@@ -164,7 +183,7 @@ deaths_na %>%
 
 ## Draw partial contribution plots from a GAM model
 
-
+Another key characteristics of a GAM model is that we can appreciate the contribution of each of the variables to the composite model, shedding a light on the relationship between each predictor and the response. Hence, we can plot the isolated effect of each individual predictor on the (fitted) response variable, conditional on the nullity of all the other predictors.
 ```{r partial plot}
 fit %>%
   plot_partial_effects(se = TRUE)
