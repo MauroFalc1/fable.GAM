@@ -186,6 +186,8 @@ deaths_na %>%
 Another key characteristics of a GAM model is that we can appreciate the contribution of each of the variables to the composite model, shedding a light on the relationship between each predictor and the response. Hence, we can plot the isolated effect of each individual predictor on the (fitted) response variable, conditional on the nullity of all the other predictors.
 ```{r partial plot}
 fit %>%
-  plot_partial_effects(se = TRUE)
+  plot_partial_effects(se = TRUE) %>%
+  patchwork::wrap_plots()
+
 ```
 

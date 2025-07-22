@@ -2,7 +2,7 @@
 #' @keywords package
 "_PACKAGE"
 
-globalVariables(c("self", "origin"))
+globalVariables(c("self", "origin",".", ".idx", "fits", "x1", "x2", "y", "z"))
 
 #' Training function of GAM model
 #'
@@ -514,7 +514,7 @@ report.GAM <- function(object, digits = max(3L, getOption("digits") - 3L), ...) 
   if (!is.null(sm$anova)) {
     cat("\nSmooth terms (Approx. chi-square tests)\n")
     cli_line()
-    stats::printCoefmat(na.exclude(sm$anova),
+    stats::printCoefmat(stats::na.exclude(sm$anova),
       digits = digits, signif.stars = TRUE,
       P.values = TRUE, has.Pvalue = TRUE, na.print = "NA"
     )
@@ -880,6 +880,7 @@ components.GAM <- function(object, simplify = TRUE, ...) {
 #' The plots show the component contributions, on the link scale, of each model term to the linear predictor.
 #'
 #' @param x A mable object.
+#' @inheritParams gam::plot.Gam
 #' @param ... Further arguments for methods.
 #'
 #' @seealso [`gam::plot.Gam()`]
@@ -895,5 +896,6 @@ plot_partial_effects <- function(x,
                              logical(1))),
     logical(1)
   )
-  ggplot.Gam(fits[is_gam][[1]][[1]]$fit,se = se,...)
+  plots <- ggplot.Gam(fits[is_gam][[1]][[1]]$fit,se = se,...)
+  return(plots)
 }

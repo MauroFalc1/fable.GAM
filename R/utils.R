@@ -161,12 +161,8 @@ build_gam_data <- function(new_data, specials) {
   dtt       <- dplyr::as_tibble(new_data)
   # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
   .trend    <- specials$trend[[1]]
-  .season <- lapply(as.list(seq_along(specials$season)),
-                    function(xx) specials$season[[xx]]) |>
-    dplyr::bind_cols()
-  .fourier <- lapply(as.list(seq_along(specials$fourier)),
-                    function(xx) specials$fourier[[xx]]) |>
-    dplyr::bind_cols()
+  .season <- dplyr::bind_cols(specials$season)
+  .fourier <- dplyr::bind_cols(specials$fourier)
   if (!is.null(.trend)) {
     dtt <- dplyr::bind_cols(dtt, .trend$data)
   }
@@ -182,12 +178,8 @@ build_gam_vars <- function(data,fml, specials) {
   dtt       <- dplyr::as_tibble(data)
   # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
   .trend    <- specials$trend[[1]]
-  .season <- lapply(as.list(seq_along(specials$season)),
-                    function(xx) specials$season[[xx]]) |>
-    dplyr::bind_cols()
-  .fourier <- lapply(as.list(seq_along(specials$fourier)),
-                     function(xx) specials$fourier[[xx]]) |>
-    dplyr::bind_cols()
+  .season <- dplyr::bind_cols(specials$season)
+  .fourier <- dplyr::bind_cols(specials$fourier)
   if (!is.null(.trend)) {
     dtt <- dplyr::bind_cols(dtt, .trend$data)
     fml <- add_specials(fml,.trend$str)

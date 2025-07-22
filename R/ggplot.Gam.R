@@ -140,7 +140,8 @@ ggplot.Gam <- function(x,
   ## 4.  Interactive or sequential display (mirrors plot.Gam)
   ## ------------------------------------------------------------------
   if (!ask) {
-    for (p in plots) print(p)
+    # for (p in plots) print(p)
+    plots
   } else {
     choices <- c(paste0("plot: ", substr(names(plots), 1L, 40L)),
                  "plot all terms", "exit")
@@ -149,9 +150,11 @@ ggplot.Gam <- function(x,
                           title = "Select term to draw (or 0/exit)")
       if (pick == 0 || pick == length(choices)) break
       if (pick == length(choices) - 1) {       # all terms
-        lapply(plots, print)
+        # lapply(plots, print)
+        plots
       } else {
-        print(plots[[pick]])
+        # print(plots[[pick]])
+        plots[[pick]]
       }
     }
   }

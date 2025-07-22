@@ -9,6 +9,10 @@ plot_partial_effects(x, se = TRUE, ...)
 \arguments{
 \item{x}{A mable object.}
 
+\item{se}{if \code{TRUE}, upper and lower pointwise
+twice-standard-error curves are included for each plot. The
+default is \code{FALSE}.}
+
 \item{...}{Further arguments for methods.}
 }
 \description{
