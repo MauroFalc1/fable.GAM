@@ -42,6 +42,7 @@ train_gam <- function(.data, specials, ...) {
   gam_formula <- obj$gam_formula
   fit <- do.call(gam::gam,list(formula = gam_formula, data = gam_data, ...))
   fit$.data <- .data
+  fit$.tsibble <- self$data
   fit$index <- idx
   fit$aicc <- fit$aic + (2*(fit$df.null-fit$df.residual+1)^2+2*(fit$df.null-fit$df.residual+1))/fit$df.residual
   structure(fit, class = c("GAM", class(fit)))
@@ -890,12 +891,59 @@ plot_partial_effects <- function(x,
                                  se    = TRUE,
                                  ...) {
   is_gam <- vapply(                               # iterate over the top level
-    fits,                                         # each element is a list‑column
+    x,                                         # each element is a list‑column
     function(col) any(vapply(col,                 # look at every model in column
-                             function(mdl) inherits(mdl$fit, "Gam"),
+                             function(mdl) inherits(mdl[[1]], "Gam"),
                              logical(1))),
     logical(1)
   )
-  plots <- ggplot.Gam(fits[is_gam][[1]][[1]]$fit,se = se,...)
+  if (length(x[is_gam][[1]])>1) {
+    stop("`plot_partial_effects()` expects a single <GAM> object.
+         Please select only one modeled series")
+  }
+  plots <- ggplot.Gam(x[is_gam][[1]][[1]]$fit,se = se,...)
   return(plots)
+}
+
+
+#' Detect Outliers for a GAM model
+#'
+#' The plots show the component contributions, on the link scale, of each model term to the linear predictor.
+#'
+#' @param .mable A mable containing the fitted GAM.
+#' @param .tsibble A tsibble containing the original series
+#' @param level confidence level for detecting the outliers
+#' @param ... Further arguments for methods.
+#'
+#' @export
+plot_outliers <- function(.mable,.tsibble,level=95,...){
+  .mable.check<- .mable %>% tibble::as_tibble() %>% dplyr::select(-tsibble::key_vars(.mable))
+  if (NCOL(.mable.check)>1||NROW(.mable)>1) {
+    stop("`plot_outliers()` expects a single <GAM> model.
+         Please select only one modeled series")
+  }
+  if (missing(.tsibble)) {
+    .tsibble <- response(.mable)
+  }
+  .index <- tsibble::index(.tsibble)
+  .response <- fabletools::response_vars(.mable)
+  lvl <- paste0(level,"%")
+  .fitted.tsibble <- .mable %>%
+    forecast(new_data = .tsibble) %>%
+    fabletools::hilo(level=level) %>%
+    fabletools::unpack_hilo({{lvl}}) %>%
+    dplyr::rename(.fitted=.mean,lower=paste0(level,"%_lower"),
+           upper=paste0(level,"%_upper")) %>%
+    dplyr::mutate(.actuals=.tsibble[[.response]],
+           .outliers=!dplyr::between(.actuals,lower,upper))
+
+  ggplot2::ggplot() +
+    ggplot2::geom_ribbon(mapping = aes(x = {{.index}},ymin = lower, ymax = upper),
+                data = .fitted.tsibble,
+                fill="brown",alpha=0.1)+
+    ggplot2::geom_line(aes({{.index}},.fitted),.fitted.tsibble,colour="brown",alpha=0.1) +
+    ggplot2::geom_point(aes({{.index}},.actuals),filter(.fitted.tsibble,.outliers),
+               colour = "blue", size = 3) +
+    ggplot2::geom_line(aes({{.index}},!!rlang::sym(.response)),.tsibble,,colour="white") +
+    ggplot2::labs(y = .response)
 }

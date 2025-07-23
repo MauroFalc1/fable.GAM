@@ -191,3 +191,12 @@ fit %>%
 
 ```
 
+
+## Detect and plot the outliers from a GAM model
+
+Fitting a GAM model allows us to detect outliers:
+```{r outlier plot}
+fit %>%
+  plot_outliers(deaths,level=95)
+
+```
