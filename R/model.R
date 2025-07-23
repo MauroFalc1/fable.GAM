@@ -2,7 +2,8 @@
 #' @keywords package
 "_PACKAGE"
 
-globalVariables(c("self", "origin",".", ".idx", "fits", "x1", "x2", "y", "z"))
+globalVariables(c("self", "origin",".", ".idx", "x1", "x2", "y", "z",
+                  ".mean",".actuals","lower","upper",".fitted",".outliers"))
 
 #' Training function of GAM model
 #'
@@ -938,12 +939,12 @@ plot_outliers <- function(.mable,.tsibble,level=95,...){
            .outliers=!dplyr::between(.actuals,lower,upper))
 
   ggplot2::ggplot() +
-    ggplot2::geom_ribbon(mapping = aes(x = {{.index}},ymin = lower, ymax = upper),
+    ggplot2::geom_ribbon(mapping = ggplot2::aes(x = {{.index}},ymin = lower, ymax = upper),
                 data = .fitted.tsibble,
                 fill="brown",alpha=0.1)+
-    ggplot2::geom_line(aes({{.index}},.fitted),.fitted.tsibble,colour="brown",alpha=0.1) +
-    ggplot2::geom_point(aes({{.index}},.actuals),filter(.fitted.tsibble,.outliers),
+    ggplot2::geom_line(ggplot2::aes({{.index}},.fitted),.fitted.tsibble,colour="brown",alpha=0.1) +
+    ggplot2::geom_point(ggplot2::aes({{.index}},.actuals),dplyr::filter(.fitted.tsibble,.outliers),
                colour = "blue", size = 3) +
-    ggplot2::geom_line(aes({{.index}},!!rlang::sym(.response)),.tsibble,,colour="white") +
+    ggplot2::geom_line(ggplot2::aes({{.index}},!!rlang::sym(.response)),.tsibble,,colour="white") +
     ggplot2::labs(y = .response)
 }
