@@ -2,19 +2,33 @@
 % Please edit documentation in R/model.R
 \name{plot_outliers}
 \alias{plot_outliers}
-\title{Detect Outliers for a GAM model}
+\title{Plot Outliers from a GAM model}
 \usage{
-plot_outliers(.mable, .tsibble, level = 95, ...)
+plot_outliers(
+  .outliers,
+  fill = "brown",
+  alpha = 0.1,
+  out_col = "blue",
+  out_size = 3,
+  act_col = "white",
+  ...
+)
 }
 \arguments{
-\item{.mable}{A mable containing the fitted GAM.}
+\item{.outliers}{The resulting tsibble of the function `detect_outliers()`}
 
-\item{.tsibble}{A tsibble containing the original series}
+\item{fill}{Colour of the confidence interval of the fitted values}
 
-\item{level}{confidence level for detecting the outliers}
+\item{alpha}{Transparency of the confidence interval}
+
+\item{out_col}{Colour of the outliers}
+
+\item{out_size}{Size of the outliers}
+
+\item{act_col}{Coulour of the actual observations}
 
 \item{...}{Further arguments for methods.}
 }
 \description{
-The plots show the component contributions, on the link scale, of each model term to the linear predictor.
+The plot shows the observation which appears to be outliers.
 }

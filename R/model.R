@@ -909,7 +909,7 @@ plot_partial_effects <- function(x,
 
 #' Detect Outliers for a GAM model
 #'
-#' The plots show the component contributions, on the link scale, of each model term to the linear predictor.
+#' The table enables to select the observations which appears to be outliers.
 #'
 #' @param .mable A mable containing the fitted GAM.
 #' @param .tsibble A tsibble containing the original series
@@ -917,10 +917,10 @@ plot_partial_effects <- function(x,
 #' @param ... Further arguments for methods.
 #'
 #' @export
-plot_outliers <- function(.mable,.tsibble,level=95,...){
+detect_outliers <- function(.mable,.tsibble,level=95,...){
   .mable.check<- .mable %>% tibble::as_tibble() %>% dplyr::select(-tsibble::key_vars(.mable))
   if (NCOL(.mable.check)>1||NROW(.mable)>1) {
-    stop("`plot_outliers()` expects a single <GAM> model.
+    stop("`detect_outliers()` expects a single <GAM> model.
          Please select only one modeled series")
   }
   if (missing(.tsibble)) {
@@ -934,17 +934,39 @@ plot_outliers <- function(.mable,.tsibble,level=95,...){
     fabletools::hilo(level=level) %>%
     fabletools::unpack_hilo({{lvl}}) %>%
     dplyr::rename(.fitted=.mean,lower=paste0(level,"%_lower"),
-           upper=paste0(level,"%_upper")) %>%
+                  upper=paste0(level,"%_upper")) %>%
     dplyr::mutate(.actuals=.tsibble[[.response]],
-           .outliers=!dplyr::between(.actuals,lower,upper))
-
-  ggplot2::ggplot() +
-    ggplot2::geom_ribbon(mapping = ggplot2::aes(x = {{.index}},ymin = lower, ymax = upper),
-                data = .fitted.tsibble,
-                fill="brown",alpha=0.1)+
-    ggplot2::geom_line(ggplot2::aes({{.index}},.fitted),.fitted.tsibble,colour="brown",alpha=0.1) +
-    ggplot2::geom_point(ggplot2::aes({{.index}},.actuals),dplyr::filter(.fitted.tsibble,.outliers),
-               colour = "blue", size = 3) +
-    ggplot2::geom_line(ggplot2::aes({{.index}},!!rlang::sym(.response)),.tsibble,,colour="white") +
-    ggplot2::labs(y = .response)
+                  .outliers=!dplyr::between(.actuals,lower,upper))
+  attr(.fitted.tsibble,"response") <- .response
+  attr(.fitted.tsibble,"level") <- level
+  return(.fitted.tsibble)
 }
+
+
+#' Plot Outliers from a GAM model
+#'
+#' The plot shows the observation which appears to be outliers.
+#'
+#' @param .outliers The resulting tsibble of the function `detect_outliers()`
+#' @param fill Colour of the confidence interval of the fitted values
+#' @param alpha Transparency of the confidence interval
+#' @param out_col Colour of the outliers
+#' @param out_size Size of the outliers
+#' @param act_col Coulour of the actual observations
+#' @param ... Further arguments for methods.
+#'
+#' @export
+plot_outliers <- function(.outliers,fill="brown",alpha=0.1,out_col="blue",out_size=3,act_col="white",...){
+  # .outliers <-as_tibble(.outliers)
+  ggplot2::ggplot() +
+    ggplot2::geom_ribbon(mapping = ggplot2::aes(x = !!rlang::sym(index_var(.outliers)),ymin = lower, ymax = upper),
+                data = .outliers,
+                fill=fill,alpha=alpha)+
+    ggplot2::geom_line(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.fitted),.outliers,colour=fill,alpha=alpha) +
+    ggplot2::geom_point(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.actuals),dplyr::filter(.outliers,.outliers),
+               colour = out_col, size = out_size) +
+    ggplot2::geom_line(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.actuals),.outliers,,colour=act_col) +
+    ggplot2::labs(y = attr(.outliers,"response"))
+}
+
+
