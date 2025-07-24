@@ -951,20 +951,20 @@ detect_outliers <- function(.mable,.tsibble,level=95,...){
 #' @param fill Colour of the confidence interval of the fitted values
 #' @param alpha Transparency of the confidence interval
 #' @param out_col Colour of the outliers
+#' @param out_shape Shape of the outliers
 #' @param out_size Size of the outliers
 #' @param act_col Coulour of the actual observations
 #' @param ... Further arguments for methods.
 #'
 #' @export
-plot_outliers <- function(.outliers,fill="brown",alpha=0.1,out_col="blue",out_size=3,act_col="white",...){
-  # .outliers <-as_tibble(.outliers)
+plot_outliers <- function(.outliers,fill="brown",alpha=0.1,out_col="blue",out_shape=1,out_size=3,act_col="black",...){
   ggplot2::ggplot() +
     ggplot2::geom_ribbon(mapping = ggplot2::aes(x = !!rlang::sym(index_var(.outliers)),ymin = lower, ymax = upper),
                 data = .outliers,
                 fill=fill,alpha=alpha)+
     ggplot2::geom_line(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.fitted),.outliers,colour=fill,alpha=alpha) +
     ggplot2::geom_point(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.actuals),dplyr::filter(.outliers,.outliers),
-               colour = out_col, size = out_size) +
+               colour = out_col,shape = out_shape, size = out_size) +
     ggplot2::geom_line(ggplot2::aes(!!rlang::sym(index_var(.outliers)),.actuals),.outliers,,colour=act_col) +
     ggplot2::labs(y = attr(.outliers,"response"))
 }

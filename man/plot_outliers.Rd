@@ -9,8 +9,9 @@ plot_outliers(
   fill = "brown",
   alpha = 0.1,
   out_col = "blue",
+  out_shape = 1,
   out_size = 3,
-  act_col = "white",
+  act_col = "black",
   ...
 )
 }
@@ -22,6 +23,8 @@ plot_outliers(
 \item{alpha}{Transparency of the confidence interval}
 
 \item{out_col}{Colour of the outliers}
+
+\item{out_shape}{Shape of the outliers}
 
 \item{out_size}{Size of the outliers}
 

@@ -205,6 +205,6 @@ deaths_outliers %>%
 And plot them:
 ```{r outliers plot}
 deaths_outliers %>%
-  plot_outliers()
+  plot_outliers(out_shape = 1)
 
 ```
