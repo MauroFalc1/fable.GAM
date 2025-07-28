@@ -969,7 +969,7 @@ detect_outliers <- function(.mable,.tsibble,level=95,...){
          Please select only one modeled series")
   }
   if (missing(.tsibble)) {
-    .tsibble <- response(.mable)
+    .tsibble <- .mable[[1]][[1]]$fit$.tsibble
   }
   .index <- tsibble::index(.tsibble)
   .response <- fabletools::response_vars(.mable)
