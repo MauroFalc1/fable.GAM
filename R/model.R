@@ -30,20 +30,29 @@ train_gam <- function(.data, specials, ...) {
   fml <- self$formula
   idx <- dtt %>% dplyr::pull(tsibble::index(dtt))
   av <- all.vars(stats::terms.formula(fml))
+  rsp <- av[[1]]
   mv <- tsibble::measured_vars(.data)
   if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- .data[[mv]]
-  dtt <- dplyr::bind_cols(
-    tibble::tibble("t_response" = y),
-    dplyr::as_tibble(dtt) %>% dplyr::select(dplyr::all_of(av[-1]))
-  )
+  # dtt <- dplyr::bind_cols(
+  #   tibble::tibble("t_response" = y),
+  #   dplyr::as_tibble(dtt) %>% dplyr::select(dplyr::all_of(av[-1]))
+  # )
   fml <- rlang::new_formula(lhs = quote(t_response), rhs = fml[[3]])
-  obj <- build_gam_vars(data = dtt, fml = fml, specials = specials)
+  # obj <- build_gam_vars(data = dtt, fml = fml, specials = specials)
+  obj <- build_gam_vars(data = tibble::tibble("t_response" = y), fml = fml, specials = specials)
   gam_data <- obj$gam_data
   gam_formula <- obj$gam_formula
   fit <- do.call(gam::gam,list(formula = gam_formula, data = gam_data, ...))
+  # fit <- do.call(gam::gam,list(formula = remove_specials(fml,names(fabletools::common_xregs)), data = dtt, ...))
+  # fit <- do.call(gam::gam,list(formula = as.formula(t_response ~ 1),data = dtt))
   fit$.data <- .data
   fit$.tsibble <- self$data
+  # fit$gam_data <- gam_data
+  # fit$gam_formula <- gam_formula
+  # fit$dtt <- dtt
+  fit$t_response <- mv
+  fit$response <- rsp
   fit$index <- idx
   fit$aicc <- fit$aic + (2*(fit$df.null-fit$df.residual+1)^2+2*(fit$df.null-fit$df.residual+1))/fit$df.residual
   structure(fit, class = c("GAM", class(fit)))
@@ -154,7 +163,41 @@ specials_gam <- fabletools::new_specials(
       origin
     )
   },
-  xreg = fabletools::special_xreg(default_intercept = FALSE),
+  # xreg = fabletools::special_xreg(default_intercept = FALSE),
+  # xreg = function() tibble::as_tibble(fabletools::special_xreg(default_intercept = FALSE)),
+  xreg = function (..., .data=self$data, default_intercept = FALSE)
+  {
+    dots <- rlang::enexprs(...)
+    if (!default_intercept) {
+      constants <- purrr::map_lgl(dots, inherits, "numeric")
+      constant_specified <- any(purrr::map_lgl(dots[constants], `%in%`,
+                                        c(-1, 0, 1)))
+      if (!constant_specified)
+        dots <- c(dots, list(0))
+    }
+    is_dot <- vapply(dots, function(x) rlang::expr_text(x) == ".",
+                     logical(1L))
+    if (any(is_dot)) {
+      new_dot <- purrr::reduce(rlang::syms(c(".", tsibble::index_var(.data), tsibble::key_vars(.data))),
+                        rlang::call2, .fn = "-")
+      dots <- c(new_dot, dots[!is_dot])
+    }
+    model_formula <- rlang::new_formula(lhs = NULL, rhs = purrr::reduce(dots,
+                                                          function(.x, .y) rlang::call2("+", .x, .y)))
+    model_formula <- stats::terms(model_formula, data = .data)
+    env <- purrr::map(rlang::enquos(...), get_env)
+    env[purrr::map_lgl(env, purrr::compose(is_empty, env_parents))] <- NULL
+    env <- if (!rlang::is_empty(env))
+      rlang::get_env(env[[1]])
+    else rlang::base_env()
+    xreg <- .data %>%
+      tibble::as_tibble() %>%
+      dplyr::select(all.vars(stats::terms.formula(model_formula)))
+  },
+  # xreg = function(...) {
+  #   dots <- rlang::enquos(...)
+  #   dplyr::as_tibble(dplyr::select(dplyr::as_tibble(self$data), !!!dots))
+  # },
   .required_specials = NULL # ,
   # .xreg_specials = names(fabletools::common_xregs)
 )
@@ -709,7 +752,7 @@ refit.GAM <- function(object,
   mv <- tsibble::measured_vars(new_data)
   if (length(mv) > 1) stop("GAM() is a univariate model.")
   y <- new_data[[mv]]
-  gam_data <- build_gam_data(dplyr::bind_cols(
+  gam_data <- build_gam_data2(dplyr::bind_cols(
     tibble("t_response" = y),
     dplyr::as_tibble(new_data)
   ), specials)
@@ -747,7 +790,7 @@ interpolate.GAM <- function(object, new_data, specials, ...) {
   # Get missing values
   y <- unclass(new_data)[[tsibble::measured_vars(new_data)]]
   miss_val <- which(is.na(y))
-  gam_data <- build_gam_data(new_data, specials)
+  gam_data <- build_gam_data2(new_data, specials)
 
   # 2 ────────────────────────────────────────────────────────────────
   # Point forecasts & standard errors on the *response* scale
@@ -767,6 +810,8 @@ interpolate.GAM <- function(object, new_data, specials, ...) {
   y[miss_val] <- fits[miss_val]
   new_data[[tsibble::measured_vars(new_data)]] <- y
   new_data
+  # gam_data %>%
+  #   tsibble::as_tsibble(index = index(new_data))
 }
 
 #' Extract components from a GAM model

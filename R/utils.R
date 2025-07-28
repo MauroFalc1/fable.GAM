@@ -157,9 +157,9 @@ gam_se <- function(object, new_data) {
 # Utilities --------------------------------------------------------------
 
 build_gam_data <- function(new_data, specials) {
-  # Mirror the logic inside forecast.GAM() --------------------------------
+  # Usable within forecast, generate -------------------------------------
   dtt       <- dplyr::as_tibble(new_data)
-  # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
+  .xreg     <- dplyr::bind_cols(specials$xreg)
   .trend    <- specials$trend[[1]]
   .season <- dplyr::bind_cols(specials$season)
   .fourier <- dplyr::bind_cols(specials$fourier)
@@ -169,14 +169,34 @@ build_gam_data <- function(new_data, specials) {
   specialstibble <- NULL
   if (NROW(.season)  > 0) specialstibble <- dplyr::bind_cols(specialstibble, .season)
   if (NROW(.fourier) > 0) specialstibble <- dplyr::bind_cols(specialstibble, .fourier)
+  # if (NROW(.xreg)    > 0) specialstibble <- dplyr::bind_cols(specialstibble, .xreg)
 
   dplyr::bind_cols(dtt, specialstibble)
 }
 
+build_gam_data2 <- function(new_data, specials) {
+  # Usable within interpolate, refit --------------------------------------
+  dtt       <- dplyr::as_tibble(new_data)
+  .xreg     <- dplyr::bind_cols(specials$xreg)
+  .trend    <- specials$trend[[1]]
+  .season <- dplyr::bind_cols(specials$season)
+  .fourier <- dplyr::bind_cols(specials$fourier)
+  if (!is.null(.trend)) {
+    dtt <- dplyr::bind_cols(dtt, .trend$data)
+  }
+  specialstibble <- NULL
+  if (NROW(.season)  > 0) specialstibble <- dplyr::bind_cols(specialstibble, .season)
+  if (NROW(.fourier) > 0) specialstibble <- dplyr::bind_cols(specialstibble, .fourier)
+  if (NROW(.xreg)    > 0) specialstibble <- dplyr::bind_cols(specialstibble, .xreg)
+
+  dplyr::bind_cols(dtt, specialstibble)
+}
+
+
 build_gam_vars <- function(data,fml, specials) {
   # Mirror the logic inside train_GAM() --------------------------------
   dtt       <- dplyr::as_tibble(data)
-  # .xreg     <- specials$xreg[[1]]      |> dplyr::as_tibble()
+  .xreg     <- dplyr::bind_cols(specials$xreg)
   .trend    <- specials$trend[[1]]
   .season <- dplyr::bind_cols(specials$season)
   .fourier <- dplyr::bind_cols(specials$fourier)
@@ -187,8 +207,11 @@ build_gam_vars <- function(data,fml, specials) {
   specialstibble <- NULL
   if (NROW(.season)  > 0) specialstibble <- dplyr::bind_cols(specialstibble, .season)
   if (NROW(.fourier) > 0) specialstibble <- dplyr::bind_cols(specialstibble, .fourier)
-
-  gam_data <- dplyr::bind_cols(dtt,specialstibble)
+  if (NROW(.xreg) > 0) {
+    gam_data <- dplyr::bind_cols(dtt,specialstibble,.xreg)
+  }else{
+    gam_data <- dplyr::bind_cols(dtt,specialstibble)
+  }
   .form <- remove_specials(fml,names(fabletools::common_xregs))
   gam_formula <- add_specials(.form,specialstibble)
   return(list(gam_data=gam_data,gam_formula=gam_formula))
