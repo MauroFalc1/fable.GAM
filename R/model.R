@@ -1015,3 +1015,90 @@ plot_outliers <- function(.outliers,fill="brown",alpha=0.1,out_col="blue",out_sh
 }
 
 
+#' Extract exact frequencies for common seasonal periods
+#'
+#' This helper is derived from [`fabletools::common_periods()`]
+#' but without the approximation of weekly data.
+#'
+#'
+#' @param x A tsibble.
+#'
+#' @return A named vector of frequencies appropriate for the provided data.
+#' @export
+exact_periods <- function(x){
+  x <- tsibble::interval(x)
+  if (inherits(x, "vctrs_vctr")) {
+    x <- vctrs::vec_data(x)
+  }
+  freq_sec <- c(year = 31557600, week = 604800, day = 86400,
+                hour = 3600, minute = 60, second = 1, millisecond = 0.001,
+                microsecond = 1e-06, nanosecond = 1e-09)
+  nm <- names(x)[x != 0]
+  if (is_empty(x))
+    return(NULL)
+  switch(paste(nm, collapse = ""), unit = c(none = 1), year = c(year = 1),
+         quarter = c(year = 4/x[["quarter"]]), month = c(year = 12/x[["month"]]),
+         week = c(year = 365.25/7/x[["week"]]), day = c(year = 365.25,
+                                                        week = 7)/x[["day"]], with(list(secs = freq_sec/sum(as.numeric(x) *
+                                                                                                              freq_sec[nm])), secs[secs > 1]))
+}
+
+
+
+#' Construct a GAM formula from a tsibble
+#'
+#' This helper inspects the series index using [`fabletools::common_periods()`]
+#' to include appropriate `trend()`, `season()` or `fourier()` specials.
+#'
+#' `season()` terms are used for short integer periods (\eqn{\le threshold}), while
+#' longer or non integer periods are expressed with `fourier()` using
+#' \eqn{K = \lfloor period/K_d \rfloor`}.
+#'
+#' @param data A tsibble containing a single measured variable.
+#' @param response The name of the response variable.
+#' @param box_cox Whether to apply a box_cox transformation to the response.
+#' @param xregs A character vector containing regressor variables' names.
+#' @param trend Does the model include trend?
+#' @param season Does the model include seasonalities?
+#' @param threshold Maximum seasonal periods that triggers `season()` instead of `fourier()`
+#' @param K_d Denominator of the maximum number of trigonometric terms \eqn{K = \lfloor period/K_d \rfloor`}
+#'
+#' @return A model formula suitable for [`GAM()`].
+#' @export
+auto_gam_formula <- function(data,response,box_cox = FALSE,xregs = NULL,
+                             trend = TRUE, season = TRUE,
+                             threshold = 24,K_d = 2) {
+  if (missing(response)) {
+    response <- tsibble::measured_vars(data)[[1]]
+  }
+  if (length(response) != 1) {
+    stop("`auto_gam_formula()` expects a tsibble with a single response variable")
+  }
+  # idx  <- tsibble::index(data)
+  if (box_cox) {
+    lambda_guerrero <- data %>% fabletools::features(!!str2lang(response),guerrero) %>% pull() %>% pmax(.,0)
+    response <- paste0("box_cox(x = ",response,", lambda = ",lambda_guerrero,")")
+  }
+  periods <- exact_periods(data)
+  ts_len <- data %>% dplyr::count(!!!tsibble::key(.)) %>% dplyr::pull() %>% min()
+  if (trend) {
+    rhs_terms <- c("trend()")
+  }else{
+    rhs_terms <- NULL
+  }
+  if (season) {
+    for (p in periods) {
+      p_num <- suppressWarnings(as.numeric(p))
+      if (ts_len > 2*p_num + 1 ) {
+        if (!is.na(p_num) && abs(p_num - round(p_num)) < sqrt(.Machine$double.eps) && p_num <= threshold) {
+          rhs_terms <- c(rhs_terms, paste0("season(period =", p, ")"))
+        } else {
+          K <- ifelse(is.na(p_num), 1L, max(1L, floor(p_num/K_d)))
+          rhs_terms <- c(rhs_terms, paste0("fourier(period =", p, ", K=", K, ")"))
+        }
+      }
+    }
+  }
+  rhs <- paste(c(rhs_terms,xregs), collapse = " + ")
+  stats::as.formula(paste(response, "~", rhs))
+}
