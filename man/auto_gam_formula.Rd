@@ -10,6 +10,7 @@ auto_gam_formula(
   box_cox = FALSE,
   xregs = NULL,
   trend = TRUE,
+  trend_args = list(),
   season = TRUE,
   threshold = 24,
   K_d = 2
@@ -25,6 +26,8 @@ auto_gam_formula(
 \item{xregs}{A character vector containing regressor variables' names.}
 
 \item{trend}{Does the model include trend?}
+
+\item{trend_args}{A list of named arguments to pass to `trend()`}
 
 \item{season}{Does the model include seasonalities?}
 

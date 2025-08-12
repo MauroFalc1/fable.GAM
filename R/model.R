@@ -1059,6 +1059,7 @@ exact_periods <- function(x){
 #' @param box_cox Whether to apply a box_cox transformation to the response.
 #' @param xregs A character vector containing regressor variables' names.
 #' @param trend Does the model include trend?
+#' @param trend_args A list of named arguments to pass to `trend()`
 #' @param season Does the model include seasonalities?
 #' @param threshold Maximum seasonal periods that triggers `season()` instead of `fourier()`
 #' @param K_d Denominator of the maximum number of trigonometric terms \eqn{K = \lfloor period/K_d \rfloor`}
@@ -1066,7 +1067,7 @@ exact_periods <- function(x){
 #' @return A model formula suitable for [`GAM()`].
 #' @export
 auto_gam_formula <- function(data,response,box_cox = FALSE,xregs = NULL,
-                             trend = TRUE, season = TRUE,
+                             trend = TRUE,trend_args=list(), season = TRUE,
                              threshold = 24,K_d = 2) {
   if (missing(response)) {
     response <- tsibble::measured_vars(data)[[1]]
@@ -1082,7 +1083,10 @@ auto_gam_formula <- function(data,response,box_cox = FALSE,xregs = NULL,
   periods <- exact_periods(data)
   ts_len <- data %>% dplyr::count(!!!tsibble::key(.)) %>% dplyr::pull() %>% min()
   if (trend) {
-    rhs_terms <- c("trend()")
+    rhs_terms <- paste0("trend(",
+                        paste(names(trend_args), trend_args, sep = "=", collapse = ","),
+                        ")")
+    # rhs_terms <- c("trend()")
   }else{
     rhs_terms <- NULL
   }
