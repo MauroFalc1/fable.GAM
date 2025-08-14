@@ -8,6 +8,7 @@ auto_gam_formula(
   data,
   response,
   box_cox = FALSE,
+  box_cox_lambda = "auto",
   xregs = NULL,
   trend = TRUE,
   trend_args = list(),
@@ -22,6 +23,8 @@ auto_gam_formula(
 \item{response}{The name of the response variable.}
 
 \item{box_cox}{Whether to apply a box_cox transformation to the response.}
+
+\item{box_cox_lambda}{A numeric value for the box_cox transformation parameter}
 
 \item{xregs}{A character vector containing regressor variables' names.}
 

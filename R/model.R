@@ -1057,6 +1057,7 @@ exact_periods <- function(x){
 #' @param data A tsibble containing a single measured variable.
 #' @param response The name of the response variable.
 #' @param box_cox Whether to apply a box_cox transformation to the response.
+#' @param box_cox_lambda A numeric value for the box_cox transformation parameter
 #' @param xregs A character vector containing regressor variables' names.
 #' @param trend Does the model include trend?
 #' @param trend_args A list of named arguments to pass to `trend()`
@@ -1066,8 +1067,10 @@ exact_periods <- function(x){
 #'
 #' @return A model formula suitable for [`GAM()`].
 #' @export
-auto_gam_formula <- function(data,response,box_cox = FALSE,xregs = NULL,
-                             trend = TRUE,trend_args=list(), season = TRUE,
+auto_gam_formula <- function(data,response,box_cox = FALSE,box_cox_lambda = "auto",
+                             xregs = NULL,
+                             trend = TRUE,trend_args=list(),
+                             season = TRUE,
                              threshold = 24,K_d = 2) {
   if (missing(response)) {
     response <- tsibble::measured_vars(data)[[1]]
@@ -1077,8 +1080,11 @@ auto_gam_formula <- function(data,response,box_cox = FALSE,xregs = NULL,
   }
   # idx  <- tsibble::index(data)
   if (box_cox) {
-    lambda_guerrero <- data %>% fabletools::features(!!str2lang(response),guerrero) %>% pull() %>% pmax(.,0)
-    response <- paste0("box_cox(x = ",response,", lambda = ",lambda_guerrero,")")
+    if (box_cox_lambda=="auto") {
+      lambda_guerrero <- data %>% fabletools::features(!!str2lang(response),guerrero) %>% pull() %>% pmax(.,0)
+      box_cox_lambda <- lambda_guerrero
+    }
+    response <- paste0("box_cox(x = ",response,", lambda = ",box_cox_lambda,")")
   }
   periods <- exact_periods(data)
   ts_len <- data %>% dplyr::count(!!!tsibble::key(.)) %>% dplyr::pull() %>% min()
